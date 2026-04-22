@@ -17,7 +17,7 @@ import { getIdsForLevel } from './api/pokeapi.js';
 import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawShields, drawHUD } from './renderer.js';
 import { renderMenuScreen, renderGameOverScreen } from './screens.js';
 
-function overlap(ax, ay, aw, ah, bx, by, bw, bh) {
+export function overlap(ax, ay, aw, ah, bx, by, bw, bh) {
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 

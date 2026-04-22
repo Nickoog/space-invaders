@@ -38,6 +38,7 @@ Chaque niveau charge une nouvelle vague de 55 Pokémon (11 colonnes × 5 rangée
 - Canvas 2D pour le rendu (800 × 600)
 - [PokéAPI](https://pokeapi.co) pour les sprites
 - [Vite](https://vitejs.dev) comme bundler/dev server
+- [Vitest](https://vitest.dev) pour les tests unitaires
 - Cache `sessionStorage` pour éviter de re-télécharger les sprites
 
 ## Installation
@@ -51,6 +52,18 @@ npm install
 ```bash
 npm run dev
 ```
+
+## Tests
+
+```bash
+# Lancer les tests une fois
+npm test
+
+# Mode watch (relance à chaque modification)
+npm run test:watch
+```
+
+93 tests unitaires couvrent la logique pure du jeu (`Player`, `PokemonGrid`, `Bullets`, `Shields`, `Game.overlap`, `pokeapi.getIdsForLevel`).
 
 ## Build de production
 

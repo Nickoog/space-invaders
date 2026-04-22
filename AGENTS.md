@@ -28,8 +28,9 @@ It is automatically deployed to GitHub Pages on every push to `master`.
 | PokéAPI | v2 | Pokémon sprite source |
 | GitHub Actions | — | CI/CD → GitHub Pages |
 | sessionStorage | Native | Sprite URL cache |
+| Vitest | ^4.1.5 | Unit test runner |
 
-**No runtime dependencies.** No UI framework, no game engine, no test runner.
+**No runtime dependencies.** No UI framework, no game engine.
 
 ---
 
@@ -165,13 +166,72 @@ npm run preview
 **Deployment:** automatic via GitHub Actions on every push to `master`.
 The workflow installs, builds, and deploys `dist/` to the `gh-pages` branch.
 
-**Tests:** there are no automated tests. Every change must be validated manually
-by playing in the browser. Key scenarios to check:
+**Tests (automated):**
+```bash
+# Run all unit tests once
+npm test
+
+# Watch mode (re-runs on file change)
+npm run test:watch
+
+# Run a single test file
+npx vitest run tests/unit/<File>.test.js
+
+# Run tests matching a pattern
+npx vitest run -t "test name"
+```
+
+Test files live in `tests/unit/`. Environment: `node` (no DOM, no Canvas).
+See `SKILL.md` at `.claude/skills/testing/SKILL.md` for full conventions.
+
+**Manual verification** — always play in the browser after logic changes. Key scenarios:
 - Collisions (Pokéball vs Pokémon, enemy bullets vs player, vs shields)
 - Level transition (all caught → next level)
 - Game over condition (invasion: grid reaches the player line)
 - Sprite loading (run `sessionStorage.clear()` in the browser console to test cold start)
 - Loading screen with progress bar
+
+---
+
+## Tests — Core Rules
+
+### Coverage overview
+
+| Module | Test file | Status |
+|--------|-----------|--------|
+| `Game.js` (overlap) | `Game.overlap.test.js` | ✅ |
+| `Player.js` | `Player.test.js` | ✅ |
+| `Bullets.js` | `Bullets.test.js` | ✅ |
+| `Shields.js` | `Shields.test.js` | ✅ |
+| `PokemonGrid.js` | `PokemonGrid.test.js` | ✅ |
+| `api/pokeapi.js` | `pokeapi.test.js` | ✅ `getIdsForLevel` only |
+| `renderer.js` | — | ❌ Canvas, skip |
+| `screens.js` | — | ❌ Canvas, skip |
+| `input.js` | — | ❌ DOM, low ROI |
+| `main.js` | — | ❌ Entry point |
+
+### Non-negotiable rules
+
+1. **Never mock the module under test.** `vi.mock('../../src/Player.js')` tests the mock, not the code.
+2. **Test behaviours, not implementations.** If internal logic changes but the observable output is identical, the test must still pass as-is.
+3. **AAA pattern.** Every `it` block follows Arrange → Act → Assert with no interleaving.
+4. **Full independence.** Each test builds its own state via factory helpers (`makeX()`). No shared mutable objects between tests.
+5. **Regression test for every bug fix.** Write the failing test first, then fix the code.
+
+### When a new test is required
+
+| Situation | Action |
+|-----------|--------|
+| New exported function | One `describe`, minimum: happy path + one edge case |
+| Bug fix | Write the failing test **first**, then fix the code |
+| Edge case flagged in review | Add an `it` to the existing `describe` |
+
+### When NOT to write a test
+
+- Functions that only call Canvas 2D (`draw*`, `render*Screen`) — no logic to verify
+- DOM event handlers in `input.js` — trivial and jsdom cost is not justified
+- `main.js` — entry point, integration test out of scope
+- Async sprite loading in `pokeapi.js` — `fetch` + `Image` + `sessionStorage` require heavy mocking with low ROI
 
 ---
 
