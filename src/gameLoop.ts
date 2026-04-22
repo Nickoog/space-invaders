@@ -6,6 +6,7 @@ import {
   LEVEL_START_INVINCIBLE_MS, HIT_INVINCIBLE_MS,
   MAX_PLAYER_BULLETS, MAX_ENEMY_BULLETS,
   GAMEOVER_DELAY_MS,
+  DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS,
 } from './constants.js';
 import { keys, consumeKey } from './input.js';
 import { createPlayer, updatePlayer } from './Player.js';
@@ -16,6 +17,8 @@ import { getIdsForLevel } from './api/pokeapi.js';
 import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawShields, drawHUD } from './renderer.js';
 import { renderMenuScreen, renderGameOverScreen } from './screens.js';
 import { overlap } from './collision.js';
+import { showQuestionModal } from './ui/modal.js';
+import { getRandomFallback, replenishPool } from './ai/questionService.js';
 import type { GameState } from './types.js';
 
 const LS_KEY = 'pokemon_invaders_hi';
@@ -32,10 +35,15 @@ function startLevel(game: GameState, level: number): void {
 }
 
 function startGame(game: GameState): void {
-  game.score = 0;
-  game.lives = 3;
+  game.score           = 0;
+  game.lives           = 3;
+  game.difficultyOffset = 0;
+  game.questionPool    = [];
+  game.lastQuestionType = null;
   startLevel(game, 1);
   game.state = S.PLAYING;
+  // Pre-generate questions in background — never awaited, never blocks the loop
+  void replenishPool(game);
 }
 
 function endGame(game: GameState): void {
@@ -45,6 +53,38 @@ function endGame(game: GameState): void {
   }
   game.gameOverDelay = 0;
   game.state = S.GAME_OVER;
+}
+
+// Called when an enemy bullet hits the player.
+// Pauses the game (QUESTION state) and shows the AI question modal.
+function triggerQuestion(game: GameState): void {
+  game.state = S.QUESTION;
+
+  const question = game.questionPool.shift() ?? getRandomFallback();
+  game.lastQuestionType = question.type;
+
+  showQuestionModal(question, (correct: boolean) => {
+    const limit = DIFFICULTY_DELTA_MS * DIFFICULTY_MAX_STEPS;
+
+    if (correct) {
+      // Life saved, game gets a little easier
+      game.difficultyOffset = Math.min(limit, game.difficultyOffset + DIFFICULTY_DELTA_MS);
+    } else {
+      // Life lost, game gets a little harder
+      game.difficultyOffset = Math.max(-limit, game.difficultyOffset - DIFFICULTY_DELTA_MS);
+      game.lives--;
+      if (game.lives <= 0) {
+        endGame(game);
+        return;
+      }
+    }
+
+    if (game.player) game.player.invincible = HIT_INVINCIBLE_MS;
+    game.state = S.PLAYING;
+
+    // Refill pool in background so the next hit is instant
+    void replenishPool(game);
+  });
 }
 
 // ── Update ───────────────────────────────────────────────────────────────────
@@ -62,7 +102,7 @@ function update(game: GameState, dt: number): void {
   if (newPlayerBullet) bullets.player.push(newPlayerBullet);
 
   // Enemy grid step + fire (capped at MAX_ENEMY_BULLETS simultaneous)
-  const newEnemyBullet = updateGrid(grid, dt, game.level);
+  const newEnemyBullet = updateGrid(grid, dt, game.level, game.difficultyOffset);
   if (newEnemyBullet && bullets.enemy.filter(b => b.active).length < MAX_ENEMY_BULLETS) {
     bullets.enemy.push(newEnemyBullet);
   }
@@ -98,10 +138,9 @@ function update(game: GameState, dt: number): void {
     }
     if (player.invincible <= 0 &&
         overlap(b.x, b.y, b.w, b.h, player.x, player.y, PLAYER_W, PLAYER_H)) {
-      b.active         = false;
-      game.lives--;
-      player.invincible = HIT_INVINCIBLE_MS;
-      if (game.lives <= 0) { endGame(game); return; }
+      b.active = false;
+      triggerQuestion(game);
+      return; // game is now QUESTION — exit update immediately
     }
   }
 
@@ -162,6 +201,9 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
         update(game, STEP);
         acc -= STEP;
       }
+      render(ctx, game);
+    } else if (game.state === S.QUESTION) {
+      // Game frozen — keep rendering the frozen frame behind the HTML modal
       render(ctx, game);
     } else if (game.state === S.MENU) {
       if (consumeKey('Enter')) startGame(game);

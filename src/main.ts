@@ -4,6 +4,8 @@ import { preloadSprites } from './api/pokeapi.js';
 import { renderLoadingScreen } from './screens.js';
 import { createGame } from './Game.js';
 import { startLoop } from './gameLoop.js';
+import { getPlayerInterests } from './ai/onboarding.js';
+import { showOnboarding } from './ui/modal.js';
 
 const canvas = document.getElementById('c') as HTMLCanvasElement;
 const ctx    = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -21,5 +23,11 @@ preloadSprites(ids, (loaded, total) => {
   renderLoadingScreen(ctx, loaded, total);
 }).then(spriteMap => {
   const game = createGame(spriteMap);
-  startLoop(game, ctx);
+
+  // Show onboarding on first launch (interests not yet saved)
+  if (!getPlayerInterests()) {
+    showOnboarding(() => startLoop(game, ctx));
+  } else {
+    startLoop(game, ctx);
+  }
 });

@@ -75,7 +75,8 @@ export function getGridBounds(grid: Grid): Bounds | null {
 }
 
 // Returns a new enemy bullet object or null. Mutates grid timers and caught flashes.
-export function updateGrid(grid: Grid, dt: number, level: number): Bullet | null {
+// difficultyOffset (ms) is added to speed/fire base: positive = easier, negative = harder.
+export function updateGrid(grid: Grid, dt: number, level: number, difficultyOffset = 0): Bullet | null {
   // Decrement caught-flash timers; mark dead when flash completes
   for (const e of grid.enemies) {
     if (e.caughtFlash > 0) {
@@ -103,9 +104,9 @@ export function updateGrid(grid: Grid, dt: number, level: number): Bullet | null
       if (b && (b.right >= W || b.left <= 0)) grid.stepPending = true;
     }
 
-    // Accelerate as the grid empties
+    // Accelerate as the grid empties; difficultyOffset shifts the base (positive = easier)
     const ratio = 1 - alive.length / (ENEMY_COLS * ENEMY_ROWS);
-    const base  = Math.max(GRID_SPEED_MIN, GRID_SPEED_BASE - (level - 1) * 70);
+    const base  = Math.max(GRID_SPEED_MIN, GRID_SPEED_BASE - (level - 1) * 70 + difficultyOffset);
     grid.moveInterval = Math.max(MOVE_INTERVAL_MIN, base * (1 - ratio * GRID_ACCEL_RATIO));
     grid.moveTimer    = grid.moveInterval;
   }
@@ -113,7 +114,7 @@ export function updateGrid(grid: Grid, dt: number, level: number): Bullet | null
   // Enemy fire: random bottom-of-column shooter
   grid.fireTimer -= dt;
   if (grid.fireTimer <= 0) {
-    const base = Math.max(FIRE_MIN_MS, FIRE_BASE_MS - (level - 1) * 100);
+    const base = Math.max(FIRE_MIN_MS, FIRE_BASE_MS - (level - 1) * 100 + difficultyOffset);
     grid.fireTimer = base + Math.random() * FIRE_RANDOM_MS;
 
     if (alive.length) {

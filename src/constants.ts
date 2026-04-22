@@ -58,4 +58,11 @@ export const BLINK_INTERVAL_MS = 100;   // invincibility blink interval (ms)
 export const MENU_BLINK_MS     = 500;   // menu/game-over text blink interval (ms)
 
 // Game states
-export const S = { LOADING: 'LOADING', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER' };
+export const S = { LOADING: 'LOADING', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION' };
+
+// AI question feature
+export const DIFFICULTY_DELTA_MS   = 80;   // ms offset per correct/wrong answer
+export const DIFFICULTY_MAX_STEPS  = 4;    // max cumulative steps in each direction
+export const QUESTION_POOL_TARGET  = 3;    // questions to pre-generate and keep ready
+export const QUESTION_TIMEOUT_MS   = 3000; // ms before API call falls back to local bank
+export const QUESTION_ANSWER_SEC   = 25;   // seconds the player has to answer

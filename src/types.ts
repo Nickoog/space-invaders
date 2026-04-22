@@ -46,6 +46,14 @@ export interface Shield {
   blocks: number[][];
 }
 
+export interface QuestionData {
+  question: string;
+  type: 'multiple_choice';
+  choices: string[];
+  correct_answer: string;
+  humor_level: 'mild' | 'absurd';
+}
+
 export interface GameState {
   state: string;
   spriteMap: Map<number, HTMLImageElement | null>;
@@ -58,4 +66,8 @@ export interface GameState {
   grid: Grid | null;
   bullets: Bullets | null;
   shields: Shield[] | null;
+  // AI question feature
+  questionPool: QuestionData[];
+  lastQuestionType: 'multiple_choice' | null;
+  difficultyOffset: number; // ms added to speed/fire intervals (positive = easier)
 }
