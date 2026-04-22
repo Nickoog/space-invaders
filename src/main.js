@@ -1,0 +1,24 @@
+import { W, H, GEN1_COUNT } from './constants.js';
+import { initInput } from './input.js';
+import { preloadSprites } from './api/pokeapi.js';
+import { renderLoadingScreen } from './screens.js';
+import { createGame, startLoop } from './Game.js';
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+canvas.width  = W;
+canvas.height = H;
+
+initInput();
+
+// Preload all Gen 1 sprites upfront so every level has sprites available.
+const ids = Array.from({ length: GEN1_COUNT }, (_, i) => i + 1);
+
+renderLoadingScreen(ctx, 0, ids.length);
+
+preloadSprites(ids, (loaded, total) => {
+  renderLoadingScreen(ctx, loaded, total);
+}).then(spriteMap => {
+  const game = createGame(spriteMap);
+  startLoop(game, ctx);
+});
