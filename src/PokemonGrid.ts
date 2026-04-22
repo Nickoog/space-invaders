@@ -3,12 +3,21 @@ import {
   ENEMY_X_GAP, ENEMY_Y_GAP, ENEMY_TOP,
   ENEMY_STEP_X, ENEMY_STEP_D, ENEMY_BULLET_SPEED,
   CAUGHT_FLASH_MS, W,
+  GRID_SPEED_BASE, GRID_SPEED_MIN, GRID_ACCEL_RATIO, MOVE_INTERVAL_MIN,
+  FIRE_BASE_MS, FIRE_MIN_MS, FIRE_RANDOM_MS,
 } from './constants.js';
+import type { Grid, Enemy, Bullet } from './types.js';
 
-export function createGrid(level, ids) {
+interface Bounds {
+  left: number;
+  right: number;
+  bottom: number;
+}
+
+export function createGrid(level: number, ids: number[]): Grid {
   const totalW = ENEMY_COLS * (ENEMY_W + ENEMY_X_GAP) - ENEMY_X_GAP;
   const startX = (W - totalW) / 2;
-  const enemies = [];
+  const enemies: Enemy[] = [];
 
   for (let row = 0; row < ENEMY_ROWS; row++) {
     for (let col = 0; col < ENEMY_COLS; col++) {
@@ -16,12 +25,12 @@ export function createGrid(level, ids) {
         row, col,
         alive: true,
         caughtFlash: 0,
-        pokemonId: ids[row * ENEMY_COLS + col],
+        pokemonId: ids[row * ENEMY_COLS + col] ?? 1,
       });
     }
   }
 
-  const base = Math.max(120, 700 - (level - 1) * 70);
+  const base = Math.max(GRID_SPEED_MIN, GRID_SPEED_BASE - (level - 1) * 70);
   return {
     enemies,
     ox: startX,
@@ -30,23 +39,23 @@ export function createGrid(level, ids) {
     moveTimer: base,
     moveInterval: base,
     stepPending: false,
-    fireTimer: Math.max(400, 1200 - (level - 1) * 100),
+    fireTimer: Math.max(FIRE_MIN_MS, FIRE_BASE_MS - (level - 1) * 100),
   };
 }
 
-export function getEnemyPos(grid, enemy) {
+export function getEnemyPos(grid: Grid, enemy: Enemy): { x: number; y: number } {
   return {
     x: grid.ox + enemy.col * (ENEMY_W + ENEMY_X_GAP),
     y: grid.oy + enemy.row * (ENEMY_H + ENEMY_Y_GAP),
   };
 }
 
-export function getAlivePokemon(grid) {
+export function getAlivePokemon(grid: Grid): Enemy[] {
   return grid.enemies.filter(e => e.alive);
 }
 
 // Private helper — avoids re-filtering when alive list is already known.
-function getBoundsFromAlive(grid, alive) {
+function getBoundsFromAlive(grid: Grid, alive: Enemy[]): Bounds | null {
   if (!alive.length) return null;
   let minC = ENEMY_COLS, maxC = 0, maxR = 0;
   for (const e of alive) {
@@ -61,12 +70,12 @@ function getBoundsFromAlive(grid, alive) {
   };
 }
 
-export function getGridBounds(grid) {
+export function getGridBounds(grid: Grid): Bounds | null {
   return getBoundsFromAlive(grid, getAlivePokemon(grid));
 }
 
 // Returns a new enemy bullet object or null. Mutates grid timers and caught flashes.
-export function updateGrid(grid, dt, level) {
+export function updateGrid(grid: Grid, dt: number, level: number): Bullet | null {
   // Decrement caught-flash timers; mark dead when flash completes
   for (const e of grid.enemies) {
     if (e.caughtFlash > 0) {
@@ -96,27 +105,27 @@ export function updateGrid(grid, dt, level) {
 
     // Accelerate as the grid empties
     const ratio = 1 - alive.length / (ENEMY_COLS * ENEMY_ROWS);
-    const base  = Math.max(120, 700 - (level - 1) * 70);
-    grid.moveInterval = Math.max(40, base * (1 - ratio * 0.85));
+    const base  = Math.max(GRID_SPEED_MIN, GRID_SPEED_BASE - (level - 1) * 70);
+    grid.moveInterval = Math.max(MOVE_INTERVAL_MIN, base * (1 - ratio * GRID_ACCEL_RATIO));
     grid.moveTimer    = grid.moveInterval;
   }
 
   // Enemy fire: random bottom-of-column shooter
   grid.fireTimer -= dt;
   if (grid.fireTimer <= 0) {
-    const base = Math.max(400, 1200 - (level - 1) * 100);
-    grid.fireTimer = base + Math.random() * 600;
+    const base = Math.max(FIRE_MIN_MS, FIRE_BASE_MS - (level - 1) * 100);
+    grid.fireTimer = base + Math.random() * FIRE_RANDOM_MS;
 
     if (alive.length) {
-      const byCol = [];
+      const byCol: Enemy[] = [];
       for (let c = 0; c < ENEMY_COLS; c++) {
         const col = alive
           .filter(e => e.col === c && e.caughtFlash === 0)
           .sort((a, b) => b.row - a.row);
-        if (col.length) byCol.push(col[0]);
+        if (col.length) byCol.push(col[0]!);
       }
       if (byCol.length) {
-        const shooter = byCol[Math.floor(Math.random() * byCol.length)];
+        const shooter = byCol[Math.floor(Math.random() * byCol.length)]!;
         const pos = getEnemyPos(grid, shooter);
         return {
           x: pos.x + ENEMY_W / 2 - 3,

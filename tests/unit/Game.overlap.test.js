@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { overlap } from '../../src/Game.js';
+import { overlap } from '../../src/collision.js';
 
 describe('overlap', () => {
   it('returns true for overlapping rectangles', () => {

@@ -2,10 +2,11 @@ import { W, H, GEN1_COUNT } from './constants.js';
 import { initInput } from './input.js';
 import { preloadSprites } from './api/pokeapi.js';
 import { renderLoadingScreen } from './screens.js';
-import { createGame, startLoop } from './Game.js';
+import { createGame } from './Game.js';
+import { startLoop } from './gameLoop.js';
 
-const canvas = document.getElementById('c');
-const ctx    = canvas.getContext('2d');
+const canvas = document.getElementById('c') as HTMLCanvasElement;
+const ctx    = canvas.getContext('2d') as CanvasRenderingContext2D;
 canvas.width  = W;
 canvas.height = H;
 

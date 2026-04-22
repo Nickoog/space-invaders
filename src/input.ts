@@ -1,8 +1,8 @@
-export const keys = {};
+export const keys: Record<string, boolean> = {};
 
 const GAME_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'Space', 'Enter']);
 
-export function initInput() {
+export function initInput(): void {
   document.addEventListener('keydown', e => {
     keys[e.code] = true;
     if (GAME_KEYS.has(e.code)) e.preventDefault();
@@ -14,8 +14,8 @@ export function initInput() {
 
 // Consume a key press (returns true once, then false until key is released and re-pressed).
 // Prevents held-Enter from instantly cycling through states.
-export function consumeKey(code) {
-  const v = keys[code];
+export function consumeKey(code: string): boolean {
+  const v = keys[code] ?? false;
   keys[code] = false;
   return v;
 }

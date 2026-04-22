@@ -1,6 +1,7 @@
 import { PLAYER_W, PLAYER_Y, PLAYER_SPEED, PLAYER_BULLET_SPEED, PLAYER_FIRE_CD, POKEBALL_RADIUS, W } from './constants.js';
+import type { Player, Bullet } from './types.js';
 
-export function createPlayer() {
+export function createPlayer(): Player {
   return {
     x: W / 2 - PLAYER_W / 2,
     y: PLAYER_Y,
@@ -10,7 +11,7 @@ export function createPlayer() {
 }
 
 // Returns a new bullet object or null. Mutates player timers.
-export function updatePlayer(player, dt, keys, hasBullet) {
+export function updatePlayer(player: Player, dt: number, keys: Record<string, boolean>, hasBullet: boolean): Bullet | null {
   const s = dt / 1000;
 
   if (keys['ArrowLeft'])  player.x = Math.max(0,          player.x - PLAYER_SPEED * s);

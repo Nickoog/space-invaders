@@ -5,9 +5,8 @@ import {
   ROW_POINTS, CAUGHT_FLASH_MS,
   LEVEL_START_INVINCIBLE_MS, HIT_INVINCIBLE_MS,
   MAX_PLAYER_BULLETS, MAX_ENEMY_BULLETS,
+  GAMEOVER_DELAY_MS,
 } from './constants.js';
-
-const LS_KEY = 'pokemon_invaders_hi';
 import { keys, consumeKey } from './input.js';
 import { createPlayer, updatePlayer } from './Player.js';
 import { createGrid, updateGrid, getAlivePokemon, getGridBounds, getEnemyPos } from './PokemonGrid.js';
@@ -16,12 +15,14 @@ import { createShields, hitShield } from './Shields.js';
 import { getIdsForLevel } from './api/pokeapi.js';
 import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawShields, drawHUD } from './renderer.js';
 import { renderMenuScreen, renderGameOverScreen } from './screens.js';
+import { overlap } from './collision.js';
+import type { GameState } from './types.js';
 
-export function overlap(ax, ay, aw, ah, bx, by, bw, bh) {
-  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
-}
+const LS_KEY = 'pokemon_invaders_hi';
 
-function startLevel(game, level) {
+// ── State transitions ────────────────────────────────────────────────────────
+
+function startLevel(game: GameState, level: number): void {
   game.level   = level;
   game.player  = createPlayer();
   game.player.invincible = LEVEL_START_INVINCIBLE_MS;
@@ -30,14 +31,14 @@ function startLevel(game, level) {
   game.shields = createShields();
 }
 
-function startGame(game) {
+function startGame(game: GameState): void {
   game.score = 0;
   game.lives = 3;
   startLevel(game, 1);
   game.state = S.PLAYING;
 }
 
-function endGame(game) {
+function endGame(game: GameState): void {
   if (game.score > game.highScore) {
     game.highScore = game.score;
     try { localStorage.setItem(LS_KEY, String(game.highScore)); } catch { /**/ }
@@ -46,8 +47,14 @@ function endGame(game) {
   game.state = S.GAME_OVER;
 }
 
-function update(game, dt) {
+// ── Update ───────────────────────────────────────────────────────────────────
+
+// Advances game state by one fixed timestep. Mutates game.
+function update(game: GameState, dt: number): void {
   const { player, grid, bullets, shields } = game;
+
+  // Guards — state is PLAYING so these are always set, but TS needs the check
+  if (!player || !grid || !bullets || !shields) return;
 
   // Player movement + fire (up to MAX_PLAYER_BULLETS simultaneous)
   const activePBullets = bullets.player.filter(b => b.active).length;
@@ -108,9 +115,13 @@ function update(game, dt) {
   }
 }
 
-function render(ctx, game) {
+// ── Render ───────────────────────────────────────────────────────────────────
+
+function render(ctx: CanvasRenderingContext2D, game: GameState): void {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
+
+  if (!game.shields || !game.player || !game.grid || !game.bullets) return;
 
   drawShields(ctx, game.shields);
   drawPlayer(ctx, game.player);
@@ -126,28 +137,13 @@ function render(ctx, game) {
   drawHUD(ctx, game);
 }
 
-export function createGame(spriteMap) {
-  const saved = parseInt(localStorage.getItem(LS_KEY), 10);
-  return {
-    state:         S.MENU,
-    spriteMap,
-    score:         0,
-    highScore:     isNaN(saved) ? 0 : saved,
-    lives:         3,
-    level:         1,
-    gameOverDelay: 0,
-    player:        null,
-    grid:          null,
-    bullets:       null,
-    shields:       null,
-  };
-}
+// ── Game loop ────────────────────────────────────────────────────────────────
 
-export function startLoop(game, ctx) {
-  let lastTime = null;
+export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void {
+  let lastTime: number | null = null;
   let acc = 0;
 
-  function loop(ts) {
+  function loop(ts: number): void {
     if (lastTime === null) lastTime = ts;
 
     // Pause when tab is hidden — reset lastTime to avoid delta accumulation on return
@@ -172,7 +168,7 @@ export function startLoop(game, ctx) {
       renderMenuScreen(ctx, game.highScore);
     } else if (game.state === S.GAME_OVER) {
       game.gameOverDelay += delta;
-      if (game.gameOverDelay > 1500 && consumeKey('Enter')) startGame(game);
+      if (game.gameOverDelay > GAMEOVER_DELAY_MS && consumeKey('Enter')) startGame(game);
       renderGameOverScreen(ctx, game.score, game.highScore, game.level, game.gameOverDelay);
     }
 

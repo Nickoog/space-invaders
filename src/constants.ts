@@ -43,5 +43,19 @@ export const MAX_ENEMY_BULLETS  = 3;
 export const LEVEL_START_INVINCIBLE_MS = 2000;
 export const HIT_INVINCIBLE_MS         = 2000;
 
+// Difficulty formula (PokemonGrid)
+export const GRID_SPEED_BASE   = 700;   // base interval at level 1 (ms)
+export const GRID_SPEED_MIN    = 120;   // minimum interval from level scaling (ms)
+export const GRID_ACCEL_RATIO  = 0.85;  // how much interval shrinks as grid empties
+export const MOVE_INTERVAL_MIN = 40;    // absolute floor for move interval (ms)
+export const FIRE_BASE_MS      = 1200;  // base fire interval at level 1 (ms)
+export const FIRE_MIN_MS       = 400;   // minimum fire interval from level scaling (ms)
+export const FIRE_RANDOM_MS    = 600;   // random jitter added to fire timer (ms)
+
+// UI timing
+export const GAMEOVER_DELAY_MS = 1500;  // delay before "press Enter to replay" appears (ms)
+export const BLINK_INTERVAL_MS = 100;   // invincibility blink interval (ms)
+export const MENU_BLINK_MS     = 500;   // menu/game-over text blink interval (ms)
+
 // Game states
 export const S = { LOADING: 'LOADING', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER' };

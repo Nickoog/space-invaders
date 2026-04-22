@@ -3,11 +3,13 @@ import {
   SHIELD_COLS, SHIELD_ROWS, SHIELD_BLOCK,
   POKEBALL_RADIUS, CAUGHT_FLASH_MS,
   ROW_COLORS, ENEMY_W, ENEMY_H, ENEMY_X_GAP, ENEMY_Y_GAP,
+  BLINK_INTERVAL_MS,
 } from './constants.js';
+import type { Player, Bullet, Grid, Enemy, Shield, GameState } from './types.js';
 
 // ── Player (trainer silhouette) ───────────────────────────────────
-export function drawPlayer(ctx, player) {
-  if (player.invincible > 0 && Math.floor(player.invincible / 100) % 2 === 0) return;
+export function drawPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
+  if (player.invincible > 0 && Math.floor(player.invincible / BLINK_INTERVAL_MS) % 2 === 0) return;
 
   const { x, y } = player;
   const cx = x + PLAYER_W / 2;
@@ -33,7 +35,7 @@ export function drawPlayer(ctx, player) {
 }
 
 // ── Pokeball projectile ───────────────────────────────────────────
-export function drawPokeball(ctx, bullet) {
+export function drawPokeball(ctx: CanvasRenderingContext2D, bullet: Bullet): void {
   const r  = bullet.w / 2;
   const cx = bullet.x + r;
   const cy = bullet.y + r;
@@ -69,17 +71,22 @@ export function drawPokeball(ctx, bullet) {
 }
 
 // ── Enemy projectile (purple seed / spore) ────────────────────────
-export function drawEnemyBullet(ctx, bullet) {
+export function drawEnemyBullet(ctx: CanvasRenderingContext2D, bullet: Bullet): void {
   ctx.fillStyle = '#cc44ff';
   ctx.fillRect(bullet.x, bullet.y, bullet.w, bullet.h);
 }
 
 // ── Pokemon sprite (with fallback + caught flash) ─────────────────
-export function drawPokemon(ctx, grid, enemy, spriteMap) {
+export function drawPokemon(
+  ctx: CanvasRenderingContext2D,
+  grid: Grid,
+  enemy: Enemy,
+  spriteMap: Map<number, HTMLImageElement | null>,
+): void {
   const x = grid.ox + enemy.col * (ENEMY_W + ENEMY_X_GAP);
   const y = grid.oy + enemy.row * (ENEMY_H + ENEMY_Y_GAP);
 
-  const img = spriteMap?.get(enemy.pokemonId);
+  const img = spriteMap.get(enemy.pokemonId);
 
   if (img && img.complete && img.naturalWidth > 0) {
     ctx.drawImage(img, x, y, ENEMY_W, ENEMY_H);
@@ -101,12 +108,12 @@ export function drawPokemon(ctx, grid, enemy, spriteMap) {
 }
 
 // ── Shields ───────────────────────────────────────────────────────
-export function drawShields(ctx, shields) {
+export function drawShields(ctx: CanvasRenderingContext2D, shields: Shield[]): void {
   ctx.fillStyle = '#00ee44';
   for (const s of shields) {
     for (let r = 0; r < SHIELD_ROWS; r++) {
       for (let c = 0; c < SHIELD_COLS; c++) {
-        if (!s.blocks[r][c]) continue;
+        if (!s.blocks[r]?.[c]) continue;
         ctx.fillRect(
           s.x + c * SHIELD_BLOCK,
           s.y + r * SHIELD_BLOCK,
@@ -118,7 +125,7 @@ export function drawShields(ctx, shields) {
 }
 
 // ── HUD ───────────────────────────────────────────────────────────
-function drawMiniPokeball(ctx, cx, cy, r) {
+function drawMiniPokeball(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
   ctx.beginPath();
   ctx.arc(cx, cy, r, Math.PI, 0);
   ctx.fillStyle = '#dd0000';
@@ -139,7 +146,7 @@ function drawMiniPokeball(ctx, cx, cy, r) {
   ctx.fill();
 }
 
-export function drawHUD(ctx, { score, highScore, lives, level }) {
+export function drawHUD(ctx: CanvasRenderingContext2D, { score, highScore, lives, level }: GameState): void {
   ctx.fillStyle = '#00ff44';
   ctx.font = '16px monospace';
 

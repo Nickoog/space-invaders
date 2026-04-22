@@ -3,15 +3,15 @@ import { GEN1_COUNT, ENEMY_COLS, ENEMY_ROWS, POKEMON_LOAD_TIMEOUT_MS } from '../
 const TOTAL = ENEMY_COLS * ENEMY_ROWS; // 55
 const CACHE_KEY = 'pokemon_invaders_sprites_v1';
 
-export function getIdsForLevel(level) {
-  const ids = [];
+export function getIdsForLevel(level: number): number[] {
+  const ids: number[] = [];
   for (let i = 0; i < TOTAL; i++) {
     ids.push((((level - 1) * TOTAL + i) % GEN1_COUNT) + 1);
   }
   return ids;
 }
 
-function loadImage(url) {
+function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload  = () => resolve(img);
@@ -21,11 +21,14 @@ function loadImage(url) {
   });
 }
 
-export async function preloadSprites(ids, onProgress) {
-  let cached = {};
-  try { cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || '{}'); } catch { /**/ }
+export async function preloadSprites(
+  ids: number[],
+  onProgress?: (loaded: number, total: number) => void,
+): Promise<Map<number, HTMLImageElement | null>> {
+  let cached: Record<string, string> = {};
+  try { cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) ?? '{}') as Record<string, string>; } catch { /**/ }
 
-  const map = new Map();
+  const map = new Map<number, HTMLImageElement | null>();
   let loaded = 0;
 
   const loadAll = Promise.allSettled(
@@ -34,7 +37,7 @@ export async function preloadSprites(ids, onProgress) {
         let url = cached[id];
         if (!url) {
           const res  = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-          const data = await res.json();
+          const data = await res.json() as { sprites: { front_default: string } };
           url = data.sprites.front_default;
           if (url) cached[id] = url;
         }
@@ -48,7 +51,7 @@ export async function preloadSprites(ids, onProgress) {
     })
   );
 
-  const timeout = new Promise(resolve =>
+  const timeout = new Promise<'timeout'>(resolve =>
     setTimeout(() => resolve('timeout'), POKEMON_LOAD_TIMEOUT_MS)
   );
 

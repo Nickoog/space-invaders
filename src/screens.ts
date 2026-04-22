@@ -1,6 +1,6 @@
-import { W, H } from './constants.js';
+import { W, H, MENU_BLINK_MS, GAMEOVER_DELAY_MS } from './constants.js';
 
-export function renderLoadingScreen(ctx, loaded, total) {
+export function renderLoadingScreen(ctx: CanvasRenderingContext2D, loaded: number, total: number): void {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
 
@@ -34,7 +34,7 @@ export function renderLoadingScreen(ctx, loaded, total) {
   ctx.textAlign = 'left';
 }
 
-export function renderMenuScreen(ctx, highScore) {
+export function renderMenuScreen(ctx: CanvasRenderingContext2D, highScore: number): void {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
 
@@ -53,7 +53,7 @@ export function renderMenuScreen(ctx, highScore) {
   ctx.fillText('← → pour bouger', W / 2, 308);
   ctx.fillText('ESPACE pour lancer une Pokéball', W / 2, 342);
 
-  if (Math.floor(Date.now() / 500) % 2 === 0) {
+  if (Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 22px monospace';
     ctx.fillText('— APPUYER SUR ENTRÉE —', W / 2, 426);
@@ -68,7 +68,7 @@ export function renderMenuScreen(ctx, highScore) {
   ctx.textAlign = 'left';
 }
 
-export function renderGameOverScreen(ctx, score, highScore, level, delay) {
+export function renderGameOverScreen(ctx: CanvasRenderingContext2D, score: number, highScore: number, level: number, delay: number): void {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
 
@@ -87,7 +87,7 @@ export function renderGameOverScreen(ctx, score, highScore, level, delay) {
   ctx.fillText(`Meilleur : ${highScore}`, W / 2, 336);
   ctx.fillText(`Niveau atteint : ${level}`, W / 2, 374);
 
-  if (delay > 1500 && Math.floor(Date.now() / 500) % 2 === 0) {
+  if (delay > GAMEOVER_DELAY_MS && Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 22px monospace';
     ctx.fillText('ENTRÉE pour rejouer', W / 2, 452);
