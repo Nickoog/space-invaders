@@ -58,7 +58,7 @@ export const BLINK_INTERVAL_MS = 100;   // invincibility blink interval (ms)
 export const MENU_BLINK_MS     = 500;   // menu/game-over text blink interval (ms)
 
 // Game states
-export const S = { LOADING: 'LOADING', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION' };
+export const S = { LOADING: 'LOADING', HOME: 'HOME', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION' };
 
 // AI question feature
 export const DIFFICULTY_DELTA_MS   = 80;   // ms offset per correct/wrong answer

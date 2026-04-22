@@ -1,5 +1,16 @@
 // ── Domain types ─────────────────────────────────────────────────────────────
 
+export interface PlayerProfile {
+  id: string;
+  pseudo: string;
+  highScore: number;
+  gamesPlayed: number;
+  interests: string[];
+  age: number | null;
+  difficultyOffset: number;
+  createdAt: number;
+}
+
 export interface Player {
   x: number;
   y: number;
@@ -70,4 +81,7 @@ export interface GameState {
   questionPool: QuestionData[];
   lastQuestionType: 'multiple_choice' | null;
   difficultyOffset: number; // ms added to speed/fire intervals (positive = easier)
+  // Profile feature
+  activeProfile: PlayerProfile | null;
+  onHome: (() => void) | null;
 }

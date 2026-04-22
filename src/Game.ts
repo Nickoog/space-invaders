@@ -1,16 +1,14 @@
 import { S } from './constants.js';
 import type { GameState } from './types.js';
 
-const LS_KEY = 'pokemon_invaders_hi';
-
 // Returns the initial game state. spriteMap is a Map<pokemonId, HTMLImageElement|null>.
+// highScore and difficultyOffset are restored from the active profile when a game starts.
 export function createGame(spriteMap: Map<number, HTMLImageElement | null>): GameState {
-  const saved = parseInt(localStorage.getItem(LS_KEY) ?? '', 10);
   return {
-    state:            S.MENU,
+    state:            S.HOME,
     spriteMap,
     score:            0,
-    highScore:        isNaN(saved) ? 0 : saved,
+    highScore:        0,
     lives:            3,
     level:            1,
     gameOverDelay:    0,
@@ -21,5 +19,7 @@ export function createGame(spriteMap: Map<number, HTMLImageElement | null>): Gam
     questionPool:     [],
     lastQuestionType: null,
     difficultyOffset: 0,
+    activeProfile:    null,
+    onHome:           null,
   };
 }

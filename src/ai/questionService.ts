@@ -131,10 +131,11 @@ export async function replenishPool(game: GameState): Promise<void> {
   const needed = QUESTION_POOL_TARGET - game.questionPool.length;
   if (needed <= 0) return;
 
-  const interests = getPlayerInterests();
-  if (!interests || interests.length === 0) return;
+  // Read interests and age from the active profile — falls back to legacy keys if absent
+  const interests = game.activeProfile?.interests ?? getPlayerInterests() ?? [];
+  if (interests.length === 0) return;
 
-  const age = getPlayerAge();
+  const age = game.activeProfile?.age ?? getPlayerAge();
 
   for (let i = 0; i < needed; i++) {
     try {

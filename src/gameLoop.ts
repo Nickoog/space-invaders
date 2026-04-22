@@ -8,6 +8,7 @@ import {
   GAMEOVER_DELAY_MS,
   DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS,
 } from './constants.js';
+import { updateProfile } from './profiles.js';
 import { keys, consumeKey } from './input.js';
 import { createPlayer, updatePlayer } from './Player.js';
 import { createGrid, updateGrid, getAlivePokemon, getGridBounds, getEnemyPos } from './PokemonGrid.js';
@@ -21,8 +22,6 @@ import { showQuestionModal } from './ui/modal.js';
 import { getRandomFallback, replenishPool } from './ai/questionService.js';
 import type { GameState } from './types.js';
 
-const LS_KEY = 'pokemon_invaders_hi';
-
 // ── State transitions ────────────────────────────────────────────────────────
 
 function startLevel(game: GameState, level: number): void {
@@ -34,11 +33,13 @@ function startLevel(game: GameState, level: number): void {
   game.shields = createShields();
 }
 
-function startGame(game: GameState): void {
-  game.score           = 0;
-  game.lives           = 3;
-  game.difficultyOffset = 0;
-  game.questionPool    = [];
+// Exported so homeScreen.ts can call it after profile selection.
+export function startGame(game: GameState): void {
+  game.score            = 0;
+  game.lives            = 3;
+  game.difficultyOffset = game.activeProfile?.difficultyOffset ?? 0; // Restores per-profile difficulty.
+  game.highScore        = game.activeProfile?.highScore ?? 0;         // Restores per-profile high score.
+  game.questionPool     = [];
   game.lastQuestionType = null;
   startLevel(game, 1);
   game.state = S.PLAYING;
@@ -47,10 +48,16 @@ function startGame(game: GameState): void {
 }
 
 function endGame(game: GameState): void {
-  if (game.score > game.highScore) {
-    game.highScore = game.score;
-    try { localStorage.setItem(LS_KEY, String(game.highScore)); } catch { /**/ }
+  // Persist stats to the active profile before showing game over screen.
+  if (game.activeProfile) {
+    game.activeProfile.gamesPlayed++;
+    if (game.score > game.activeProfile.highScore) {
+      game.activeProfile.highScore = game.score;
+    }
+    game.activeProfile.difficultyOffset = game.difficultyOffset;
+    updateProfile(game.activeProfile);
   }
+  if (game.score > game.highScore) game.highScore = game.score;
   game.gameOverDelay = 0;
   game.state = S.GAME_OVER;
 }
@@ -195,7 +202,11 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
     const delta = Math.min(ts - lastTime, 100);
     lastTime = ts;
 
-    if (game.state === S.PLAYING) {
+    if (game.state === S.HOME) {
+      // DOM overlay (homeScreen.ts) handles all UI — canvas stays black.
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, W, H);
+    } else if (game.state === S.PLAYING) {
       acc += delta;
       while (acc >= STEP) {
         update(game, STEP);
@@ -210,7 +221,11 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
       renderMenuScreen(ctx, game.highScore);
     } else if (game.state === S.GAME_OVER) {
       game.gameOverDelay += delta;
-      if (game.gameOverDelay > GAMEOVER_DELAY_MS && consumeKey('Enter')) startGame(game);
+      if (game.gameOverDelay > GAMEOVER_DELAY_MS && consumeKey('Enter')) {
+        game.activeProfile = null;
+        game.state = S.HOME;
+        game.onHome?.();
+      }
       renderGameOverScreen(ctx, game.score, game.highScore, game.level, game.gameOverDelay);
     }
 

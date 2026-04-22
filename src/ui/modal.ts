@@ -1,6 +1,6 @@
 import type { QuestionData } from '../types.js';
 import { QUESTION_ANSWER_SEC } from '../constants.js';
-import { ONBOARDING_QUESTIONS, savePlayerInterests, savePlayerAge } from '../ai/onboarding.js';
+import { ONBOARDING_QUESTIONS } from '../ai/onboarding.js';
 
 // ── Shared styles (injected once) ────────────────────────────────────────────
 
@@ -97,12 +97,16 @@ function removeModal(): void {
 
 // ── Onboarding modal ─────────────────────────────────────────────────────────
 
-export function showOnboarding(onComplete: (interests: string[]) => void): void {
+// Collects age + interests from the player without persisting anything.
+// The caller receives (interests, age) and decides where to save.
+export function showOnboarding(onComplete: (interests: string[], age: number | null) => void): void {
   injectStyles();
 
   const overlay = document.createElement('div');
   overlay.id = 'ai-modal';
   document.body.appendChild(overlay);
+
+  let collectedAge: number | null = null;
 
   // ── Step 0 : age ─────────────────────────────────────────────────────────
 
@@ -110,7 +114,7 @@ export function showOnboarding(onComplete: (interests: string[]) => void): void 
     overlay.innerHTML = `
       <div class="ai-box">
         <div class="ai-ob-title">⚡ POKEMON INVADERS ⚡</div>
-        <div class="ai-ob-welcome">Bienvenue ! Réponds à quelques questions pour personnaliser tes défis.</div>
+        <div class="ai-ob-welcome">Réponds à quelques questions pour personnaliser tes défis.</div>
         <div class="ai-ob-question" style="margin-top:10px">🎂 Quel âge as-tu ?</div>
         <input class="ai-ob-age-input" id="ob-age" type="number" min="5" max="120"
                placeholder="…" autocomplete="off" />
@@ -134,7 +138,7 @@ export function showOnboarding(onComplete: (interests: string[]) => void): void 
     nextBtn.addEventListener('click', () => {
       const age = parseInt(input.value, 10);
       if (!Number.isFinite(age)) return;
-      savePlayerAge(age);
+      collectedAge = age;
       renderInterestStep();
     });
 
@@ -185,9 +189,8 @@ export function showOnboarding(onComplete: (interests: string[]) => void): void 
       collected.push(selected);
       step++;
       if (step >= total) {
-        savePlayerInterests(collected);
         removeModal();
-        onComplete(collected);
+        onComplete(collected, collectedAge);
       } else {
         renderInterestStep();
       }
