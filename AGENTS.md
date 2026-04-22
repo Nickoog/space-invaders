@@ -29,8 +29,11 @@ It is automatically deployed to GitHub Pages on every push to `master`.
 | GitHub Actions | — | CI/CD → GitHub Pages |
 | sessionStorage | Native | Sprite URL cache |
 | Vitest | ^4.1.5 | Unit test runner |
+| ai (Vercel AI SDK) | ^4.x | Structured text generation |
+| @ai-sdk/anthropic | ^1.x | Anthropic provider for the AI SDK |
+| zod | ^3.x | Schema validation for AI responses |
 
-**No runtime dependencies.** No UI framework, no game engine.
+**No UI framework, no game engine.** The AI SDK (`ai`, `@ai-sdk/anthropic`, `zod`) are optional runtime dependencies — the game runs fully without them if `VITE_ANTHROPIC_API_KEY` is absent.
 
 ---
 
@@ -51,6 +54,12 @@ src/
 ├── renderer.ts        draw* functions per entity (Canvas 2D, immediate rendering)
 ├── screens.ts         Non-gameplay screens: loading, menu, game over
 ├── input.ts           Keyboard: global `keys` object + consumeKey()
+├── ai/
+│   ├── questionService.ts    AI question generation (Anthropic SDK) + fallback logic
+│   ├── fallbackQuestions.ts  Local question bank — 20 multiple_choice questions (no API)
+│   └── onboarding.ts         Player interest/age collection + localStorage persistence
+├── ui/
+│   └── modal.ts              Onboarding modal + in-game question modal (DOM overlay)
 └── api/
     └── pokeapi.ts     Sprite fetching, sessionStorage cache, 8s timeout
 ```
@@ -67,7 +76,10 @@ main.ts
                   ├─── renderer.ts
                   ├─── screens.ts
                   ├─── input.ts
-                  └─── api/pokeapi.ts
+                  ├─── api/pokeapi.ts
+                  ├─── ai/questionService.ts ── ai/fallbackQuestions.ts
+                  │                         └── ai/onboarding.ts
+                  └─── ui/modal.ts ──────────── ai/onboarding.ts
 All modules depend on constants.ts and types.ts
 input.ts and constants.ts have no dependencies
 ```
@@ -101,7 +113,9 @@ input.ts and constants.ts have no dependencies
 - **Call `initInput()` more than once** — event listeners accumulate with no cleanup
 - **Replace `catch { /**/ }` with `console.error`** without an explicit reason — the silence is intentional
 - **Remove the colored-circle fallback** in `drawPokemon()` — it is intentional (missing sprite = graceful degradation)
-- **Add npm dependencies** without confirmation — the project is intentionally zero runtime dependencies
+- **Add npm dependencies** without confirmation — keep the dependency footprint minimal
+- **Reintroduce the `open` question type** in `QuestionData` — removed intentionally; all questions are `multiple_choice`
+- **Expose `VITE_ANTHROPIC_API_KEY` in logs or UI** — it is embedded in the browser bundle; do not leak it further
 - **Modify `vite.config.js`** — the `base: '/space-invaders/'` is tied to the GitHub Pages deployment
 - **Weaken TypeScript config** (`strict`, `noUncheckedIndexedAccess`) without explicit confirmation
 - **Push to `master`** — this triggers an automatic production deployment
@@ -219,6 +233,10 @@ See `SKILL.md` at `.claude/skills/testing/SKILL.md` for full conventions.
 | `screens.ts` | — | ❌ Canvas, skip |
 | `input.ts` | — | ❌ DOM, low ROI |
 | `main.ts` | — | ❌ Entry point |
+| `ai/questionService.ts` | — | ❌ Anthropic API + fetch, skip |
+| `ai/fallbackQuestions.ts` | — | ❌ Static data, skip |
+| `ai/onboarding.ts` | — | ❌ localStorage + DOM, skip |
+| `ui/modal.ts` | — | ❌ DOM overlay, skip |
 
 ### Non-negotiable rules
 
@@ -269,6 +287,16 @@ outside of `update()` or add extra calls inside a tight inner loop.
 
 ### `initInput()` — no cleanup
 `addEventListener` calls are never removed. Do not call `initInput()` more than once.
+
+### AI question feature — key invariants
+
+**`VITE_ANTHROPIC_API_KEY` absente ou invalide** → `getProvider()` retourne `null` et `getRandomFallback()` est utilisé silencieusement. C'est le comportement attendu, pas un bug.
+
+**`questionPool` dans `GameState`** — rechargé en fire-and-forget via `replenishPool()` appelé depuis `gameLoop.ts`. Ne jamais `await` cette fonction dans la boucle principale ; elle ne lance jamais d'exception.
+
+**`QuestionData.type` est toujours `'multiple_choice'`** — le type `open` a été supprimé intentionnellement. `choices` est un tableau requis (non-optionnel). Ne pas réintroduire la branche `open` dans `modal.ts` ou le schema Zod.
+
+**Onboarding** — les intérêts et l'âge du joueur sont persistés dans `localStorage` via `ai/onboarding.ts`. Si `localStorage` est indisponible (navigation privée, quota), les fonctions retournent `null` silencieusement et la génération de questions se fait sans contexte de personnalisation.
 
 ### `GameState` nullability — `player`, `grid`, `bullets`, `shields`
 These fields are `null` in MENU and GAME_OVER states and populated in PLAYING state.

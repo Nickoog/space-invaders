@@ -32,6 +32,16 @@ Chaque niveau charge une nouvelle vague de 55 Pokémon (11 colonnes × 5 rangée
 - **4 boucliers** peuvent absorber les tirs (des deux côtés)
 - Capturer tous les Pokémon d'une vague passe au niveau suivant
 
+## Fonctionnalité IA
+
+Pendant la partie, des **questions à choix multiples** apparaissent lorsque le joueur capture un Pokémon. Elles sont générées dynamiquement via l'API Anthropic et personnalisées selon l'âge et les centres d'intérêt du joueur (collectés au lancement).
+
+- Si `VITE_ANTHROPIC_API_KEY` est absente ou invalide, une banque de 20 questions locales est utilisée en silence — le jeu fonctionne sans clé API.
+- Un fichier `.env` à la racine suffit pour activer la génération dynamique :
+  ```
+  VITE_ANTHROPIC_API_KEY=sk-ant-...
+  ```
+
 ## Stack technique
 
 - TypeScript (strict, sans framework)
@@ -40,6 +50,7 @@ Chaque niveau charge une nouvelle vague de 55 Pokémon (11 colonnes × 5 rangée
 - [Vite](https://vitejs.dev) comme bundler/dev server
 - [Vitest](https://vitest.dev) pour les tests unitaires
 - Cache `sessionStorage` pour éviter de re-télécharger les sprites
+- [Vercel AI SDK](https://sdk.vercel.ai) + `@ai-sdk/anthropic` + `zod` — génération de questions IA (dépendances optionnelles)
 
 ## Installation
 
@@ -75,8 +86,14 @@ npm run build
 
 ```
 src/
+├── ai/
+│   ├── fallbackQuestions.ts  # Banque locale de 20 questions (sans API)
+│   ├── onboarding.ts         # Collecte âge/intérêts, persistance localStorage
+│   └── questionService.ts    # Génération de questions via Anthropic SDK + fallback
 ├── api/
 │   └── pokeapi.ts     # Chargement et cache des sprites PokéAPI
+├── ui/
+│   └── modal.ts       # Modale d'onboarding et modale de question en jeu
 ├── Bullets.ts         # Gestion des projectiles (Pokéballs et tirs ennemis)
 ├── collision.ts       # Détection de collision AABB (overlap)
 ├── constants.ts       # Constantes du jeu (dimensions, vitesses, scoring...)
