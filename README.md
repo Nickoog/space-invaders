@@ -1,6 +1,6 @@
 # Pokemon Invaders
 
-Un Space Invaders revisité sur le thème Pokémon, développé en JavaScript vanilla avec Vite.
+Un Space Invaders revisité sur le thème Pokémon, développé en TypeScript vanilla avec Vite.
 
 ## Concept
 
@@ -34,7 +34,7 @@ Chaque niveau charge une nouvelle vague de 55 Pokémon (11 colonnes × 5 rangée
 
 ## Stack technique
 
-- JavaScript ES Modules (vanilla, sans framework)
+- TypeScript (strict, sans framework)
 - Canvas 2D pour le rendu (800 × 600)
 - [PokéAPI](https://pokeapi.co) pour les sprites
 - [Vite](https://vitejs.dev) comme bundler/dev server
@@ -76,15 +76,18 @@ npm run build
 ```
 src/
 ├── api/
-│   └── pokeapi.js     # Chargement et cache des sprites PokéAPI
-├── Bullets.js         # Gestion des projectiles (Pokéballs et tirs ennemis)
-├── constants.js       # Constantes du jeu (dimensions, vitesses, scoring...)
-├── Game.js            # Boucle principale, logique de jeu et collisions
-├── input.js           # Gestion du clavier
-├── main.js            # Point d'entrée, initialisation du canvas
-├── Player.js          # Déplacement et tir du joueur
-├── PokemonGrid.js     # Grille ennemie et déplacement des Pokémon
-├── renderer.js        # Fonctions de dessin (joueur, Pokémon, HUD...)
-├── screens.js         # Écrans de chargement, menu et game over
-└── Shields.js         # Boucliers destructibles
+│   └── pokeapi.ts     # Chargement et cache des sprites PokéAPI
+├── Bullets.ts         # Gestion des projectiles (Pokéballs et tirs ennemis)
+├── collision.ts       # Détection de collision AABB (overlap)
+├── constants.ts       # Constantes du jeu (dimensions, vitesses, scoring...)
+├── Game.ts            # Factory createGame — état initial du jeu
+├── gameLoop.ts        # Boucle principale, update, render, machine à états
+├── input.ts           # Gestion du clavier
+├── main.ts            # Point d'entrée, initialisation du canvas
+├── Player.ts          # Déplacement et tir du joueur
+├── PokemonGrid.ts     # Grille ennemie et déplacement des Pokémon
+├── renderer.ts        # Fonctions de dessin (joueur, Pokémon, HUD...)
+├── screens.ts         # Écrans de chargement, menu et game over
+├── Shields.ts         # Boucliers destructibles
+└── types.ts           # Interfaces TypeScript (Player, Grid, Bullet, GameState…)
 ```
