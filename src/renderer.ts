@@ -157,6 +157,18 @@ export function drawHUD(ctx: CanvasRenderingContext2D, game: GameState): void {
   ctx.fillStyle = toCatch === 0 ? '#ffffff' : '#00ff44';
   ctx.fillText(`À attraper : ${toCatch}`, W - 20, H - 12);
 
+  // Bonus message — fades out over the last 500ms
+  if (game.bonusMessageTimer > 0) {
+    const alpha = Math.min(1, game.bonusMessageTimer / 500);
+    ctx.globalAlpha = alpha;
+    ctx.textAlign   = 'center';
+    ctx.fillStyle   = '#ffff44';
+    ctx.font        = 'bold 22px monospace';
+    ctx.fillText(`Bonne réponse !  ${game.bonusMessage}`, W / 2, H / 2 - 60);
+    ctx.globalAlpha = 1;
+    ctx.font        = '16px monospace';
+  }
+
   ctx.fillStyle = '#00ff44';
   ctx.fillRect(0, H - 38, W, 2);
 }

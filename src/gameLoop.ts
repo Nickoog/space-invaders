@@ -3,7 +3,7 @@ import {
   PLAYER_W, PLAYER_H, PLAYER_Y,
   ENEMY_W, ENEMY_H,
   ROW_POINTS, CAUGHT_FLASH_MS,
-  LEVEL_START_INVINCIBLE_MS, HIT_INVINCIBLE_MS,
+  LEVEL_START_INVINCIBLE_MS, HIT_INVINCIBLE_MS, HIT_INVINCIBLE_CORRECT_MS, CORRECT_ANSWER_BONUS, BONUS_MESSAGE_MS,
   MAX_PLAYER_BULLETS, MAX_ENEMY_BULLETS,
   GAMEOVER_DELAY_MS, LEVEL_UP_MS,
   DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS,
@@ -74,8 +74,12 @@ function triggerQuestion(game: GameState): void {
     const limit = DIFFICULTY_DELTA_MS * DIFFICULTY_MAX_STEPS;
 
     if (correct) {
-      // Life saved, game gets a little easier
-      game.difficultyOffset = Math.min(limit, game.difficultyOffset + DIFFICULTY_DELTA_MS);
+      // Life saved, score bonus, longer invincibility, game gets a little easier
+      game.score             += CORRECT_ANSWER_BONUS;
+      game.bonusMessage       = `+${CORRECT_ANSWER_BONUS} pts`;
+      game.bonusMessageTimer  = BONUS_MESSAGE_MS;
+      game.difficultyOffset   = Math.min(limit, game.difficultyOffset + DIFFICULTY_DELTA_MS);
+      if (game.player) game.player.invincible = HIT_INVINCIBLE_CORRECT_MS;
     } else {
       // Life lost, game gets a little harder
       game.difficultyOffset = Math.max(-limit, game.difficultyOffset - DIFFICULTY_DELTA_MS);
@@ -84,9 +88,8 @@ function triggerQuestion(game: GameState): void {
         endGame(game);
         return;
       }
+      if (game.player) game.player.invincible = HIT_INVINCIBLE_MS;
     }
-
-    if (game.player) game.player.invincible = HIT_INVINCIBLE_MS;
     game.state = S.PLAYING;
 
     // Refill pool in background so the next hit is instant
@@ -102,6 +105,9 @@ function update(game: GameState, dt: number): void {
 
   // Guards — state is PLAYING so these are always set, but TS needs the check
   if (!player || !grid || !bullets) return;
+
+  // Bonus message timer
+  if (game.bonusMessageTimer > 0) game.bonusMessageTimer -= dt;
 
   // Player movement + fire (up to MAX_PLAYER_BULLETS simultaneous)
   const activePBullets = bullets.player.filter(b => b.active).length;

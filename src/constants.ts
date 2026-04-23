@@ -40,8 +40,11 @@ export const MAX_PLAYER_BULLETS = 3;
 export const MAX_ENEMY_BULLETS  = 5;
 
 // Level transition
-export const LEVEL_START_INVINCIBLE_MS = 2000;
-export const HIT_INVINCIBLE_MS         = 2000;
+export const LEVEL_START_INVINCIBLE_MS  = 2000;
+export const HIT_INVINCIBLE_MS          = 2000; // after wrong answer
+export const HIT_INVINCIBLE_CORRECT_MS  = 2500; // after correct answer — bonus repositioning time
+export const CORRECT_ANSWER_BONUS       = 300;  // score points awarded for a correct answer
+export const BONUS_MESSAGE_MS           = 1500; // duration of the bonus HUD message (ms)
 
 // Level progression
 export const LEVEL_CLEAR_RATIO = 0.5;   // fraction of enemies to eliminate to clear a level
@@ -67,7 +70,7 @@ export const S = { LOADING: 'LOADING', HOME: 'HOME', MENU: 'MENU', PLAYING: 'PLA
 export const LEVEL_UP_MS = 1500; // duration of the "NIVEAU X" splash (ms)
 
 // AI question feature
-export const DIFFICULTY_DELTA_MS   = 80;   // ms offset per correct/wrong answer
+export const DIFFICULTY_DELTA_MS   = 100;  // ms offset per correct/wrong answer
 export const DIFFICULTY_MAX_STEPS  = 4;    // max cumulative steps in each direction
 export const QUESTION_POOL_TARGET  = 3;    // questions to pre-generate and keep ready
 export const QUESTION_TIMEOUT_MS   = 3000; // ms before API call falls back to local bank

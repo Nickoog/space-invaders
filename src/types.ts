@@ -82,6 +82,8 @@ export interface GameState {
   questionPool: QuestionData[];
   lastQuestionType: 'multiple_choice' | null;
   difficultyOffset: number; // ms added to speed/fire intervals (positive = easier)
+  bonusMessage: string;      // transient HUD message after correct answer
+  bonusMessageTimer: number; // counts down to 0 (ms)
   // Profile feature
   activeProfile: PlayerProfile | null;
   onHome: (() => void) | null;
