@@ -3,31 +3,98 @@ const LS_KEY_AGE = 'pokemon_invaders_age';
 
 export interface OnboardingQuestion {
   text: string;
+  label: string;   // label court injecté dans le prompt AI (ex: "Genre de jeu : FPS / Action")
   options: string[];
 }
 
 export const ONBOARDING_QUESTIONS: OnboardingQuestion[] = [
   {
-    text: "🎮 Ton univers principal quand t'as du temps libre ?",
-    options: ['Gaming', 'Sport', 'Musique', 'Cuisine', 'Cinéma / Séries'],
-  },
-  {
-    text: "⚽ Ton rapport au sport ?",
+    text: "🕹️ Ton genre de jeu préféré ?",
+    label: 'Genre de jeu',
     options: [
-      'Je pratique sérieusement',
-      'Spectateur passionné',
-      'Un peu des deux',
-      "Le sport c'est pour les autres",
-      'Les Pokémon comptent comme sport',
+      'FPS / Action',
+      'RPG / Open world',
+      'Stratégie / Gestion',
+      'Jeux de sport',
+      'Candy Crush compte comme jeu vidéo',
     ],
   },
   {
-    text: "🎵 Ce qui tourne chez toi en ce moment ?",
-    options: ['Rock / Metal', 'Hip-hop / Rap', 'Pop / R&B', 'Électro / Dance', 'Variété française'],
+    text: "🤖 Ton avis sur l'IA ?",
+    label: "Rapport à l'IA",
+    options: [
+      "Fasciné, j'utilise tout",
+      'Utile mais méfiant',
+      'Indifférent',
+      'Skynet arrive je vous dis',
+      'Je parle déjà à Claude tous les jours',
+    ],
   },
   {
-    text: "🍕 Ta cuisine préférée ?",
-    options: ['Française', 'Italienne', 'Asiatique', 'Américaine / Tex-mex', 'Tout ce qui va au micro-ondes'],
+    text: "🎬 Ton genre de film préféré ?",
+    label: 'Genre de film',
+    options: [
+      'Action / Aventure',
+      'Comédie',
+      'Horreur / Thriller',
+      'Science-fiction',
+      "Les films où rien n'explose",
+    ],
+  },
+  {
+    text: "🌶️ Ton niveau d'épices ?",
+    label: 'Tolérance aux épices',
+    options: [
+      'Doux uniquement',
+      'Un peu de piquant',
+      "Fort c'est mieux",
+      'Suicide sauce sans sourciller',
+      "J'appelle les pompiers après chaque repas",
+    ],
+  },
+  {
+    text: "🌅 Tu es plutôt ?",
+    label: 'Rythme de vie',
+    options: [
+      'Lève-tôt productif',
+      'Couche-tard créatif',
+      "Ni l'un ni l'autre honnêtement",
+      "Ça dépend si y'a du café",
+      'Je dors quand je peux',
+    ],
+  },
+  {
+    text: "😂 Ton style d'humour ?",
+    label: "Style d'humour",
+    options: [
+      'Humour noir',
+      'Blagues nulles assumées',
+      'Sarcasme permanent',
+      'Humour absurde',
+      'Je ris surtout de mes propres blagues',
+    ],
+  },
+  {
+    text: "🦸 Ton superpouvoir idéal ?",
+    label: 'Superpouvoir idéal',
+    options: [
+      'Téléportation',
+      'Lire dans les pensées',
+      'Invisibilité',
+      "Arrêter le temps",
+      'Manger sans grossir',
+    ],
+  },
+  {
+    text: "🎓 Ton rapport à l'apprentissage ?",
+    label: "Rapport à l'apprentissage",
+    options: [
+      "J'adore apprendre constamment",
+      "Quand c'est utile",
+      'YouTube University uniquement',
+      "J'apprends par l'expérience",
+      "L'école m'a traumatisé",
+    ],
   },
 ];
 

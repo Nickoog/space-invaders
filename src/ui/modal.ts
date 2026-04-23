@@ -186,7 +186,7 @@ export function showOnboarding(onComplete: (interests: string[], age: number | n
 
     nextBtn.addEventListener('click', () => {
       if (!selected) return;
-      collected.push(selected);
+      collected.push(`${q.label} : ${selected}`);
       step++;
       if (step >= total) {
         removeModal();
