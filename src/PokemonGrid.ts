@@ -106,7 +106,7 @@ export function updateGrid(grid: Grid, dt: number, level: number, difficultyOffs
 
     // Accelerate as the grid empties; difficultyOffset shifts the base (positive = easier)
     const ratio = 1 - alive.length / (ENEMY_COLS * ENEMY_ROWS);
-    const base  = Math.max(GRID_SPEED_MIN, GRID_SPEED_BASE - (level - 1) * 70 + difficultyOffset);
+    const base  = Math.max(GRID_SPEED_MIN, Math.round(GRID_SPEED_BASE * Math.pow(0.88, level - 1)) + difficultyOffset);
     grid.moveInterval = Math.max(MOVE_INTERVAL_MIN, base * (1 - ratio * GRID_ACCEL_RATIO));
     grid.moveTimer    = grid.moveInterval;
   }
@@ -114,7 +114,7 @@ export function updateGrid(grid: Grid, dt: number, level: number, difficultyOffs
   // Enemy fire: random bottom-of-column shooter
   grid.fireTimer -= dt;
   if (grid.fireTimer <= 0) {
-    const base = Math.max(FIRE_MIN_MS, FIRE_BASE_MS - (level - 1) * 100 + difficultyOffset);
+    const base = Math.max(FIRE_MIN_MS, Math.round(FIRE_BASE_MS * Math.pow(0.88, level - 1)) + difficultyOffset);
     grid.fireTimer = base + Math.random() * FIRE_RANDOM_MS;
 
     if (alive.length) {

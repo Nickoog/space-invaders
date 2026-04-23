@@ -15,7 +15,7 @@ export const ENEMY_X_GAP = 8, ENEMY_Y_GAP = 8;
 export const ENEMY_TOP = 60;
 export const ENEMY_STEP_X = 8;
 export const ENEMY_STEP_D = 20;
-export const ENEMY_BULLET_SPEED = 200;
+export const ENEMY_BULLET_SPEED = 260;
 
 // Shields
 export const SHIELD_COLS = 8, SHIELD_ROWS = 4;
@@ -37,20 +37,23 @@ export const ROW_COLORS = ['#ffff44', '#ff9900', '#ff9900', '#ff4444', '#ff4444'
 
 // Bullets
 export const MAX_PLAYER_BULLETS = 3;
-export const MAX_ENEMY_BULLETS  = 3;
+export const MAX_ENEMY_BULLETS  = 5;
 
 // Level transition
 export const LEVEL_START_INVINCIBLE_MS = 2000;
 export const HIT_INVINCIBLE_MS         = 2000;
 
+// Level progression
+export const LEVEL_CLEAR_RATIO = 0.5;   // fraction of enemies to eliminate to clear a level
+
 // Difficulty formula (PokemonGrid)
-export const GRID_SPEED_BASE   = 700;   // base interval at level 1 (ms)
-export const GRID_SPEED_MIN    = 120;   // minimum interval from level scaling (ms)
+export const GRID_SPEED_BASE   = 480;   // base interval at level 1 (ms) — was 700
+export const GRID_SPEED_MIN    = 60;    // minimum interval from level scaling (ms)
 export const GRID_ACCEL_RATIO  = 0.85;  // how much interval shrinks as grid empties
 export const MOVE_INTERVAL_MIN = 40;    // absolute floor for move interval (ms)
-export const FIRE_BASE_MS      = 1200;  // base fire interval at level 1 (ms)
-export const FIRE_MIN_MS       = 400;   // minimum fire interval from level scaling (ms)
-export const FIRE_RANDOM_MS    = 600;   // random jitter added to fire timer (ms)
+export const FIRE_BASE_MS      = 900;   // base fire interval at level 1 (ms) — was 1200
+export const FIRE_MIN_MS       = 160;   // minimum fire interval from level scaling (ms) — was 400
+export const FIRE_RANDOM_MS    = 400;   // random jitter added to fire timer (ms) — was 600
 
 // UI timing
 export const GAMEOVER_DELAY_MS = 1500;  // delay before "press Enter to replay" appears (ms)
@@ -58,7 +61,10 @@ export const BLINK_INTERVAL_MS = 100;   // invincibility blink interval (ms)
 export const MENU_BLINK_MS     = 500;   // menu/game-over text blink interval (ms)
 
 // Game states
-export const S = { LOADING: 'LOADING', HOME: 'HOME', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION' };
+export const S = { LOADING: 'LOADING', HOME: 'HOME', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION', LEVEL_UP: 'LEVEL_UP' };
+
+// Level transition screen
+export const LEVEL_UP_MS = 1500; // duration of the "NIVEAU X" splash (ms)
 
 // AI question feature
 export const DIFFICULTY_DELTA_MS   = 80;   // ms offset per correct/wrong answer
