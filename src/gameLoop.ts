@@ -5,18 +5,18 @@ import {
   ROW_POINTS, CAUGHT_FLASH_MS,
   LEVEL_START_INVINCIBLE_MS, HIT_INVINCIBLE_MS,
   MAX_PLAYER_BULLETS, MAX_ENEMY_BULLETS,
-  GAMEOVER_DELAY_MS,
+  GAMEOVER_DELAY_MS, LEVEL_UP_MS,
   DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS,
+  ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO,
 } from './constants.js';
 import { updateProfile } from './profiles.js';
 import { keys, consumeKey } from './input.js';
 import { createPlayer, updatePlayer } from './Player.js';
 import { createGrid, updateGrid, getAlivePokemon, getGridBounds, getEnemyPos } from './PokemonGrid.js';
 import { createBullets, updateBullets } from './Bullets.js';
-import { createShields, hitShield } from './Shields.js';
 import { getIdsForLevel } from './api/pokeapi.js';
-import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawShields, drawHUD } from './renderer.js';
-import { renderMenuScreen, renderGameOverScreen } from './screens.js';
+import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawHUD } from './renderer.js';
+import { renderMenuScreen, renderGameOverScreen, renderLevelUpScreen } from './screens.js';
 import { overlap } from './collision.js';
 import { showQuestionModal } from './ui/modal.js';
 import { getRandomFallback, replenishPool } from './ai/questionService.js';
@@ -30,7 +30,7 @@ function startLevel(game: GameState, level: number): void {
   game.player.invincible = LEVEL_START_INVINCIBLE_MS;
   game.grid    = createGrid(level, getIdsForLevel(level));
   game.bullets = createBullets();
-  game.shields = createShields();
+  game.state   = S.PLAYING;
 }
 
 // Exported so homeScreen.ts can call it after profile selection.
@@ -98,10 +98,10 @@ function triggerQuestion(game: GameState): void {
 
 // Advances game state by one fixed timestep. Mutates game.
 function update(game: GameState, dt: number): void {
-  const { player, grid, bullets, shields } = game;
+  const { player, grid, bullets } = game;
 
   // Guards — state is PLAYING so these are always set, but TS needs the check
-  if (!player || !grid || !bullets || !shields) return;
+  if (!player || !grid || !bullets) return;
 
   // Player movement + fire (up to MAX_PLAYER_BULLETS simultaneous)
   const activePBullets = bullets.player.filter(b => b.active).length;
@@ -117,13 +117,9 @@ function update(game: GameState, dt: number): void {
   // Move all bullets
   updateBullets(bullets, dt);
 
-  // Pokeball vs shields + pokemon
+  // Pokeball vs pokemon
   for (const b of bullets.player) {
     if (!b.active) continue;
-    if (hitShield(shields, b.x, b.y, b.w, b.h)) {
-      b.active = false;
-      continue;
-    }
     for (const e of grid.enemies) {
       if (!e.alive || e.caughtFlash > 0) continue;
       const pos = getEnemyPos(grid, e);
@@ -136,13 +132,9 @@ function update(game: GameState, dt: number): void {
     }
   }
 
-  // Enemy bullets vs shields + player
+  // Enemy bullets vs player
   for (const b of bullets.enemy) {
     if (!b.active) continue;
-    if (hitShield(shields, b.x, b.y, b.w, b.h)) {
-      b.active = false;
-      continue;
-    }
     if (player.invincible <= 0 &&
         overlap(b.x, b.y, b.w, b.h, player.x, player.y, PLAYER_W, PLAYER_H)) {
       b.active = false;
@@ -155,9 +147,11 @@ function update(game: GameState, dt: number): void {
   const gb = getGridBounds(grid);
   if (gb && gb.bottom >= PLAYER_Y) { endGame(game); return; }
 
-  // Level clear — all pokemon caught (alive=false or finishing flash)
-  if (getAlivePokemon(grid).length === 0) {
-    startLevel(game, game.level + 1);
+  // Level clear — enough pokemon caught (LEVEL_CLEAR_RATIO threshold)
+  if (getAlivePokemon(grid).length <= Math.floor(ENEMY_COLS * ENEMY_ROWS * (1 - LEVEL_CLEAR_RATIO))) {
+    game.nextLevel    = game.level + 1;
+    game.levelUpTimer = 0;
+    game.state        = S.LEVEL_UP;
   }
 }
 
@@ -167,9 +161,8 @@ function render(ctx: CanvasRenderingContext2D, game: GameState): void {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
 
-  if (!game.shields || !game.player || !game.grid || !game.bullets) return;
+  if (!game.player || !game.grid || !game.bullets) return;
 
-  drawShields(ctx, game.shields);
   drawPlayer(ctx, game.player);
 
   for (const e of game.grid.enemies) {
@@ -213,6 +206,13 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
         acc -= STEP;
       }
       render(ctx, game);
+    } else if (game.state === S.LEVEL_UP) {
+      game.levelUpTimer += delta;
+      renderLevelUpScreen(ctx, game.nextLevel, game.levelUpTimer);
+      if (game.levelUpTimer >= LEVEL_UP_MS) {
+        startLevel(game, game.nextLevel);
+        void replenishPool(game);
+      }
     } else if (game.state === S.QUESTION) {
       // Game frozen — keep rendering the frozen frame behind the HTML modal
       render(ctx, game);

@@ -1,11 +1,10 @@
 import {
   W, H, PLAYER_W, PLAYER_H,
-  SHIELD_COLS, SHIELD_ROWS, SHIELD_BLOCK,
   POKEBALL_RADIUS, CAUGHT_FLASH_MS,
   ROW_COLORS, ENEMY_W, ENEMY_H, ENEMY_X_GAP, ENEMY_Y_GAP,
-  BLINK_INTERVAL_MS,
+  BLINK_INTERVAL_MS, ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO,
 } from './constants.js';
-import type { Player, Bullet, Grid, Enemy, Shield, GameState } from './types.js';
+import type { Player, Bullet, Grid, Enemy, GameState } from './types.js';
 
 // ── Player (trainer silhouette) ───────────────────────────────────
 export function drawPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
@@ -107,23 +106,6 @@ export function drawPokemon(
   }
 }
 
-// ── Shields ───────────────────────────────────────────────────────
-export function drawShields(ctx: CanvasRenderingContext2D, shields: Shield[]): void {
-  ctx.fillStyle = '#00ee44';
-  for (const s of shields) {
-    for (let r = 0; r < SHIELD_ROWS; r++) {
-      for (let c = 0; c < SHIELD_COLS; c++) {
-        if (!s.blocks[r]?.[c]) continue;
-        ctx.fillRect(
-          s.x + c * SHIELD_BLOCK,
-          s.y + r * SHIELD_BLOCK,
-          SHIELD_BLOCK, SHIELD_BLOCK
-        );
-      }
-    }
-  }
-}
-
 // ── HUD ───────────────────────────────────────────────────────────
 function drawMiniPokeball(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
   ctx.beginPath();
@@ -146,7 +128,8 @@ function drawMiniPokeball(ctx: CanvasRenderingContext2D, cx: number, cy: number,
   ctx.fill();
 }
 
-export function drawHUD(ctx: CanvasRenderingContext2D, { score, highScore, lives, level }: GameState): void {
+export function drawHUD(ctx: CanvasRenderingContext2D, game: GameState): void {
+  const { score, highScore, lives, level } = game;
   ctx.fillStyle = '#00ff44';
   ctx.font = '16px monospace';
 
@@ -165,6 +148,14 @@ export function drawHUD(ctx: CanvasRenderingContext2D, { score, highScore, lives
   for (let i = 0; i < lives; i++) {
     drawMiniPokeball(ctx, 78 + i * 26, H - 20, 8);
   }
+
+  // Pokémon remaining to catch before level ends
+  const alive     = game.grid?.enemies.filter(e => e.alive).length ?? 0;
+  const threshold = Math.floor(ENEMY_COLS * ENEMY_ROWS * (1 - LEVEL_CLEAR_RATIO));
+  const toCatch   = Math.max(0, alive - threshold);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = toCatch === 0 ? '#ffffff' : '#00ff44';
+  ctx.fillText(`À attraper : ${toCatch}`, W - 20, H - 12);
 
   ctx.fillStyle = '#00ff44';
   ctx.fillRect(0, H - 38, W, 2);

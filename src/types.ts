@@ -73,10 +73,11 @@ export interface GameState {
   lives: number;
   level: number;
   gameOverDelay: number;
+  levelUpTimer: number;  // counts up during LEVEL_UP state (ms)
+  nextLevel: number;     // level to start after the LEVEL_UP splash
   player: Player | null;
   grid: Grid | null;
   bullets: Bullets | null;
-  shields: Shield[] | null;
   // AI question feature
   questionPool: QuestionData[];
   lastQuestionType: 'multiple_choice' | null;

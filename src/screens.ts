@@ -1,4 +1,4 @@
-import { W, H, MENU_BLINK_MS, GAMEOVER_DELAY_MS } from './constants.js';
+import { W, H, MENU_BLINK_MS, GAMEOVER_DELAY_MS, LEVEL_UP_MS } from './constants.js';
 
 export function renderLoadingScreen(ctx: CanvasRenderingContext2D, loaded: number, total: number): void {
   ctx.fillStyle = '#000';
@@ -65,6 +65,28 @@ export function renderMenuScreen(ctx: CanvasRenderingContext2D, highScore: numbe
     ctx.fillText(`MEILLEUR : ${String(highScore).padStart(4, '0')} Pokémon capturés`, W / 2, 504);
   }
 
+  ctx.textAlign = 'left';
+}
+
+export function renderLevelUpScreen(ctx: CanvasRenderingContext2D, nextLevel: number, timer: number): void {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center';
+
+  // Fade in then hold
+  const alpha = Math.min(1, timer / 300);
+  ctx.globalAlpha = alpha;
+
+  ctx.fillStyle = '#ffff44';
+  ctx.font = 'bold 28px monospace';
+  ctx.fillText('NIVEAU', W / 2, H / 2 - 40);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold 90px monospace`;
+  ctx.fillText(String(nextLevel), W / 2, H / 2 + 50);
+
+  ctx.globalAlpha = 1;
   ctx.textAlign = 'left';
 }
 
