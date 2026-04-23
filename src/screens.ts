@@ -1,4 +1,5 @@
-import { W, H, MENU_BLINK_MS, GAMEOVER_DELAY_MS, LEVEL_UP_MS } from './constants.js';
+import { W, H, MENU_BLINK_MS, GAMEOVER_DELAY_MS, LEVEL_UP_MS, ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO } from './constants.js';
+import { TYPE_LABELS, TYPE_COLORS } from './api/pokeapi.js';
 
 export function renderLoadingScreen(ctx: CanvasRenderingContext2D, loaded: number, total: number): void {
   ctx.fillStyle = '#000';
@@ -68,7 +69,7 @@ export function renderMenuScreen(ctx: CanvasRenderingContext2D, highScore: numbe
   ctx.textAlign = 'left';
 }
 
-export function renderLevelUpScreen(ctx: CanvasRenderingContext2D, nextLevel: number, timer: number): void {
+export function renderLevelUpScreen(ctx: CanvasRenderingContext2D, nextLevel: number, timer: number, levelType: string): void {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
 
@@ -80,11 +81,24 @@ export function renderLevelUpScreen(ctx: CanvasRenderingContext2D, nextLevel: nu
 
   ctx.fillStyle = '#ffff44';
   ctx.font = 'bold 28px monospace';
-  ctx.fillText('NIVEAU', W / 2, H / 2 - 40);
+  ctx.fillText('NIVEAU', W / 2, H / 2 - 80);
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = `bold 90px monospace`;
-  ctx.fillText(String(nextLevel), W / 2, H / 2 + 50);
+  ctx.font = 'bold 90px monospace';
+  ctx.fillText(String(nextLevel), W / 2, H / 2 + 10);
+
+  // Type objective
+  const typeColor    = TYPE_COLORS[levelType] ?? '#ffffff';
+  const typeLabel    = TYPE_LABELS[levelType] ?? levelType;
+  const total   = ENEMY_COLS * ENEMY_ROWS;
+  const toCatch = total - Math.floor(total * (1 - LEVEL_CLEAR_RATIO));
+  ctx.fillStyle = typeColor;
+  ctx.font = 'bold 20px monospace';
+  ctx.fillText(`Attrape ${toCatch} Pokémon ${typeLabel} !`, W / 2, H / 2 + 70);
+
+  ctx.fillStyle = '#888888';
+  ctx.font = '16px monospace';
+  ctx.fillText('Évite les autres types', W / 2, H / 2 + 100);
 
   ctx.globalAlpha = 1;
   ctx.textAlign = 'left';

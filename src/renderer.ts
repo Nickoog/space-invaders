@@ -97,6 +97,14 @@ export function drawPokemon(
     ctx.fill();
   }
 
+  // Red tint overlay for wrong-type enemies
+  if (!enemy.correctType) {
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle   = '#ff2020';
+    ctx.fillRect(x, y, ENEMY_W, ENEMY_H);
+    ctx.globalAlpha = 1;
+  }
+
   // White flash overlay while being caught
   if (enemy.caughtFlash > 0) {
     ctx.globalAlpha = (enemy.caughtFlash / CAUGHT_FLASH_MS) * 0.8;
@@ -104,6 +112,20 @@ export function drawPokemon(
     ctx.fillRect(x - 2, y - 2, ENEMY_W + 4, ENEMY_H + 4);
     ctx.globalAlpha = 1;
   }
+}
+
+// ── Wrong-type penalty vignette ───────────────────────────────────────────────
+export function drawPenaltyVignette(ctx: CanvasRenderingContext2D, penaltyTimer: number): void {
+  // Pulse: blink fast at start, fade as timer runs down
+  const blink = Math.sin(Date.now() / 80) * 0.5 + 0.5;
+  ctx.globalAlpha = Math.min(0.55, (penaltyTimer / 4000) * 0.55) * blink;
+  ctx.fillStyle   = '#ff0000';
+  const thickness = 24;
+  ctx.fillRect(0, 0, W, thickness);
+  ctx.fillRect(0, H - thickness, W, thickness);
+  ctx.fillRect(0, 0, thickness, H);
+  ctx.fillRect(W - thickness, 0, thickness, H);
+  ctx.globalAlpha = 1;
 }
 
 // ── HUD ───────────────────────────────────────────────────────────

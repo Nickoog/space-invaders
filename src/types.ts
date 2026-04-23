@@ -24,6 +24,7 @@ export interface Enemy {
   alive: boolean;
   caughtFlash: number;
   pokemonId: number;
+  correctType: boolean; // true = matches the level's target type
 }
 
 export interface Grid {
@@ -35,6 +36,8 @@ export interface Grid {
   moveInterval: number;
   stepPending: boolean;
   fireTimer: number;
+  levelType: string;    // target type for this level (e.g. 'fire')
+  penaltyTimer: number; // ms remaining of wrong-type fire penalty (0 = no penalty)
 }
 
 export interface Bullet {

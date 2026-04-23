@@ -8,14 +8,15 @@ import {
   GAMEOVER_DELAY_MS, LEVEL_UP_MS,
   DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS,
   ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO,
+  WRONG_TYPE_PENALTY_MS,
 } from './constants.js';
 import { updateProfile } from './profiles.js';
 import { keys, consumeKey } from './input.js';
 import { createPlayer, updatePlayer } from './Player.js';
 import { createGrid, updateGrid, getAlivePokemon, getGridBounds, getEnemyPos } from './PokemonGrid.js';
 import { createBullets, updateBullets } from './Bullets.js';
-import { getIdsForLevel } from './api/pokeapi.js';
-import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawHUD } from './renderer.js';
+import { getIdsForLevel, getLevelType } from './api/pokeapi.js';
+import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawHUD, drawPenaltyVignette } from './renderer.js';
 import { renderMenuScreen, renderGameOverScreen, renderLevelUpScreen } from './screens.js';
 import { overlap } from './collision.js';
 import { showQuestionModal } from './ui/modal.js';
@@ -25,10 +26,11 @@ import type { GameState } from './types.js';
 // ── State transitions ────────────────────────────────────────────────────────
 
 function startLevel(game: GameState, level: number): void {
-  game.level   = level;
-  game.player  = createPlayer();
+  game.level  = level;
+  game.player = createPlayer();
   game.player.invincible = LEVEL_START_INVINCIBLE_MS;
-  game.grid    = createGrid(level, getIdsForLevel(level));
+  const { ids, correctFlags, levelType } = getIdsForLevel(level);
+  game.grid    = createGrid(level, ids, correctFlags, levelType);
   game.bullets = createBullets();
   game.state   = S.PLAYING;
 }
@@ -132,7 +134,12 @@ function update(game: GameState, dt: number): void {
       if (overlap(b.x, b.y, b.w, b.h, pos.x, pos.y, ENEMY_W, ENEMY_H)) {
         e.caughtFlash = CAUGHT_FLASH_MS;
         b.active      = false;
-        game.score   += ROW_POINTS[e.row] ?? 10;
+        if (e.correctType) {
+          game.score += ROW_POINTS[e.row] ?? 10;
+        } else {
+          // Wrong type — trigger fire penalty, no score
+          grid.penaltyTimer = WRONG_TYPE_PENALTY_MS;
+        }
         break;
       }
     }
@@ -180,6 +187,9 @@ function render(ctx: CanvasRenderingContext2D, game: GameState): void {
   for (const b of game.bullets.enemy)  drawEnemyBullet(ctx, b);
 
   drawHUD(ctx, game);
+
+  // Penalty vignette — shown when a wrong-type enemy was hit
+  if (game.grid.penaltyTimer > 0) drawPenaltyVignette(ctx, game.grid.penaltyTimer);
 }
 
 // ── Game loop ────────────────────────────────────────────────────────────────
@@ -214,7 +224,7 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
       render(ctx, game);
     } else if (game.state === S.LEVEL_UP) {
       game.levelUpTimer += delta;
-      renderLevelUpScreen(ctx, game.nextLevel, game.levelUpTimer);
+      renderLevelUpScreen(ctx, game.nextLevel, game.levelUpTimer, getLevelType(game.nextLevel));
       if (game.levelUpTimer >= LEVEL_UP_MS) {
         startLevel(game, game.nextLevel);
         void replenishPool(game);

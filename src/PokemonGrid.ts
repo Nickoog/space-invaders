@@ -4,7 +4,7 @@ import {
   ENEMY_STEP_X, ENEMY_STEP_D, ENEMY_BULLET_SPEED,
   CAUGHT_FLASH_MS, W,
   GRID_SPEED_BASE, GRID_SPEED_MIN, GRID_ACCEL_RATIO, MOVE_INTERVAL_MIN,
-  FIRE_BASE_MS, FIRE_MIN_MS, FIRE_RANDOM_MS,
+  FIRE_BASE_MS, FIRE_MIN_MS, FIRE_RANDOM_MS, WRONG_TYPE_FIRE_MS,
 } from './constants.js';
 import type { Grid, Enemy, Bullet } from './types.js';
 
@@ -14,23 +14,30 @@ interface Bounds {
   bottom: number;
 }
 
-export function createGrid(level: number, ids: number[]): Grid {
+export function createGrid(
+  level: number,
+  ids: number[],
+  correctFlags: boolean[],
+  levelType: string,
+): Grid {
   const totalW = ENEMY_COLS * (ENEMY_W + ENEMY_X_GAP) - ENEMY_X_GAP;
   const startX = (W - totalW) / 2;
   const enemies: Enemy[] = [];
 
   for (let row = 0; row < ENEMY_ROWS; row++) {
     for (let col = 0; col < ENEMY_COLS; col++) {
+      const i = row * ENEMY_COLS + col;
       enemies.push({
         row, col,
         alive: true,
         caughtFlash: 0,
-        pokemonId: ids[row * ENEMY_COLS + col] ?? 1,
+        pokemonId:   ids[i] ?? 1,
+        correctType: correctFlags[i] ?? true,
       });
     }
   }
 
-  const base = Math.max(GRID_SPEED_MIN, GRID_SPEED_BASE - (level - 1) * 70);
+  const base = Math.max(GRID_SPEED_MIN, Math.round(GRID_SPEED_BASE * Math.pow(0.88, level - 1)));
   return {
     enemies,
     ox: startX,
@@ -39,7 +46,9 @@ export function createGrid(level: number, ids: number[]): Grid {
     moveTimer: base,
     moveInterval: base,
     stepPending: false,
-    fireTimer: Math.max(FIRE_MIN_MS, FIRE_BASE_MS - (level - 1) * 100),
+    fireTimer: Math.max(FIRE_MIN_MS, Math.round(FIRE_BASE_MS * Math.pow(0.88, level - 1))),
+    levelType,
+    penaltyTimer: 0,
   };
 }
 
@@ -111,11 +120,16 @@ export function updateGrid(grid: Grid, dt: number, level: number, difficultyOffs
     grid.moveTimer    = grid.moveInterval;
   }
 
+  // Penalty timer — counts down after a wrong-type hit
+  if (grid.penaltyTimer > 0) grid.penaltyTimer -= dt;
+
   // Enemy fire: random bottom-of-column shooter
   grid.fireTimer -= dt;
   if (grid.fireTimer <= 0) {
-    const base = Math.max(FIRE_MIN_MS, Math.round(FIRE_BASE_MS * Math.pow(0.88, level - 1)) + difficultyOffset);
-    grid.fireTimer = base + Math.random() * FIRE_RANDOM_MS;
+    const base = grid.penaltyTimer > 0
+      ? WRONG_TYPE_FIRE_MS + Math.random() * 60         // penalty: ~x8 faster, bypasses FIRE_MIN_MS
+      : Math.max(FIRE_MIN_MS, Math.round(FIRE_BASE_MS * Math.pow(0.88, level - 1)) + difficultyOffset) + Math.random() * FIRE_RANDOM_MS;
+    grid.fireTimer = base;
 
     if (alive.length) {
       const byCol: Enemy[] = [];

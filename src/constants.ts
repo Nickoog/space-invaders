@@ -46,6 +46,11 @@ export const HIT_INVINCIBLE_CORRECT_MS  = 2500; // after correct answer — bonu
 export const CORRECT_ANSWER_BONUS       = 300;  // score points awarded for a correct answer
 export const BONUS_MESSAGE_MS           = 1500; // duration of the bonus HUD message (ms)
 
+// Typed enemy feature
+export const WRONG_TYPE_RATIO           = 0.3;  // fraction of wrong-type enemies per level
+export const WRONG_TYPE_PENALTY_MS      = 4000; // penalty duration when wrong type is hit (ms)
+export const WRONG_TYPE_FIRE_MS         = 90;   // fire interval during penalty (ms) — ~x8 faster
+
 // Level progression
 export const LEVEL_CLEAR_RATIO = 0.5;   // fraction of enemies to eliminate to clear a level
 
