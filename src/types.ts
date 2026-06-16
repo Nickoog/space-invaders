@@ -90,4 +90,12 @@ export interface GameState {
   // Profile feature
   activeProfile: PlayerProfile | null;
   onHome: (() => void) | null;
+  // Hard mode (New Game+)
+  hardMode: boolean;
+  questionsInRound: number;          // total questions to answer per hit (1 normal, 2 hard)
+  questionsAnsweredInRound: number;  // questions answered correctly so far this hit
+  // Victory / Interlude
+  victoryDelay: number;
+  interludeMessage: string;
+  interludeImage: HTMLImageElement | null;
 }

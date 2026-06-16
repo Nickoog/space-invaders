@@ -96,6 +96,14 @@ export function deleteProfile(id: string): void {
   saveProfiles(loadProfiles().filter(p => p.id !== id));
 }
 
+// ── Birthday gift: auto-create Flavien's profile on first launch ──────────────
+
+export function ensureFlavienProfile(): void {
+  if (loadProfiles().length > 0) return; // profiles already exist, nothing to do
+  const profile = createProfile('FLAVIEN', ['gaming', 'réseaux sociaux', 'jeux vidéo'], 17);
+  addProfile(profile);
+}
+
 // ── Migration from legacy keys ────────────────────────────────────────────────
 
 export function migrateFromLegacy(): void {

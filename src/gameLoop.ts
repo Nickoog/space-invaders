@@ -5,7 +5,7 @@ import {
   ROW_POINTS, CAUGHT_FLASH_MS,
   LEVEL_START_INVINCIBLE_MS, HIT_INVINCIBLE_MS, HIT_INVINCIBLE_CORRECT_MS, CORRECT_ANSWER_BONUS, BONUS_MESSAGE_MS,
   MAX_PLAYER_BULLETS, MAX_ENEMY_BULLETS,
-  GAMEOVER_DELAY_MS, LEVEL_UP_MS,
+  GAMEOVER_DELAY_MS, LEVEL_UP_MS, VICTORY_DELAY_MS, MAX_LEVELS,
   DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS,
   ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO,
   WRONG_TYPE_PENALTY_MS,
@@ -17,10 +17,11 @@ import { createGrid, updateGrid, getAlivePokemon, getGridBounds, getEnemyPos } f
 import { createBullets, updateBullets } from './Bullets.js';
 import { getIdsForLevel, getLevelType } from './api/pokeapi.js';
 import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawHUD, drawPenaltyVignette } from './renderer.js';
-import { renderMenuScreen, renderGameOverScreen, renderLevelUpScreen } from './screens.js';
+import { renderMenuScreen, renderGameOverScreen, renderLevelUpScreen, renderVictoryScreen, renderInterludeScreen } from './screens.js';
 import { overlap } from './collision.js';
 import { showQuestionModal } from './ui/modal.js';
 import { getRandomFallback, replenishPool } from './ai/questionService.js';
+import { getInterludeForLevel } from './interludes.js';
 import type { GameState } from './types.js';
 
 // ── State transitions ────────────────────────────────────────────────────────
@@ -30,17 +31,23 @@ function startLevel(game: GameState, level: number): void {
   game.player = createPlayer();
   game.player.invincible = LEVEL_START_INVINCIBLE_MS;
   const { ids, correctFlags, levelType } = getIdsForLevel(level);
+  const wrongCount = correctFlags.filter(f => !f).length;
+  console.debug(`[GRID] Niveau ${level} → ${correctFlags.length - wrongCount} correct, ${wrongCount} mauvais type`);
   game.grid    = createGrid(level, ids, correctFlags, levelType);
   game.bullets = createBullets();
   game.state   = S.PLAYING;
 }
 
 // Exported so homeScreen.ts can call it after profile selection.
-export function startGame(game: GameState): void {
-  game.score            = 0;
-  game.lives            = 3;
-  game.difficultyOffset = game.activeProfile?.difficultyOffset ?? 0; // Restores per-profile difficulty.
-  game.highScore        = game.activeProfile?.highScore ?? 0;         // Restores per-profile high score.
+// hardMode = true activates New Game+ (2 questions per enemy hit).
+export function startGame(game: GameState, hardMode = false): void {
+  game.score                    = 0;
+  game.lives                    = 3;
+  game.hardMode                 = hardMode;
+  game.questionsInRound         = 1;
+  game.questionsAnsweredInRound = 0;
+  game.difficultyOffset = game.activeProfile?.difficultyOffset ?? 0;
+  game.highScore        = game.activeProfile?.highScore ?? 0;
   game.questionPool     = [];
   game.lastQuestionType = null;
   startLevel(game, 1);
@@ -66,9 +73,15 @@ function endGame(game: GameState): void {
 
 // Called when an enemy bullet hits the player.
 // Pauses the game (QUESTION state) and shows the AI question modal.
+// In hard mode (game.hardMode), 2 questions must be answered per hit.
 function triggerQuestion(game: GameState): void {
-  game.state = S.QUESTION;
+  game.state                    = S.QUESTION;
+  game.questionsAnsweredInRound = 0;
+  game.questionsInRound         = game.hardMode ? 2 : 1;
+  askNextQuestion(game);
+}
 
+function askNextQuestion(game: GameState): void {
   const question = game.questionPool.shift() ?? getRandomFallback();
   game.lastQuestionType = question.type;
 
@@ -82,6 +95,13 @@ function triggerQuestion(game: GameState): void {
       game.bonusMessageTimer  = BONUS_MESSAGE_MS;
       game.difficultyOffset   = Math.min(limit, game.difficultyOffset + DIFFICULTY_DELTA_MS);
       if (game.player) game.player.invincible = HIT_INVINCIBLE_CORRECT_MS;
+
+      game.questionsAnsweredInRound++;
+      if (game.questionsAnsweredInRound < game.questionsInRound) {
+        // Hard mode: chain to the next question in this round
+        askNextQuestion(game);
+        return;
+      }
     } else {
       // Life lost, game gets a little harder
       game.difficultyOffset = Math.max(-limit, game.difficultyOffset - DIFFICULTY_DELTA_MS);
@@ -160,8 +180,11 @@ function update(game: GameState, dt: number): void {
   const gb = getGridBounds(grid);
   if (gb && gb.bottom >= PLAYER_Y) { endGame(game); return; }
 
-  // Level clear — enough pokemon caught (LEVEL_CLEAR_RATIO threshold)
-  if (getAlivePokemon(grid).length <= Math.floor(ENEMY_COLS * ENEMY_ROWS * (1 - LEVEL_CLEAR_RATIO))) {
+  // Level clear — only correct-type catches count toward progression
+  const aliveCorrect  = grid.enemies.filter(e => e.alive && e.correctType).length;
+  const totalCorrect  = grid.enemies.filter(e => e.correctType).length;
+  const clearThreshold = Math.floor(totalCorrect * (1 - LEVEL_CLEAR_RATIO));
+  if (aliveCorrect <= clearThreshold) {
     game.nextLevel    = game.level + 1;
     game.levelUpTimer = 0;
     game.state        = S.LEVEL_UP;
@@ -224,10 +247,56 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
       render(ctx, game);
     } else if (game.state === S.LEVEL_UP) {
       game.levelUpTimer += delta;
-      renderLevelUpScreen(ctx, game.nextLevel, game.levelUpTimer, getLevelType(game.nextLevel));
+      const won = game.nextLevel > MAX_LEVELS;
+      renderLevelUpScreen(ctx, game.nextLevel, game.levelUpTimer, getLevelType(game.nextLevel), won);
       if (game.levelUpTimer >= LEVEL_UP_MS) {
+        if (won) {
+          // All 17 levels completed — save stats then show victory screen
+          if (game.activeProfile) {
+            game.activeProfile.gamesPlayed++;
+            if (game.score > game.activeProfile.highScore) game.activeProfile.highScore = game.score;
+            game.activeProfile.difficultyOffset = game.difficultyOffset;
+            updateProfile(game.activeProfile);
+          }
+          if (game.score > game.highScore) game.highScore = game.score;
+          game.victoryDelay = 0;
+          game.state = S.VICTORY;
+        } else {
+          const interlude = getInterludeForLevel(game.level);
+          if (interlude) {
+            game.interludeMessage = interlude.message;
+            if (interlude.photo) {
+              const img = new Image();
+              img.src = `/interludes/${interlude.photo}`;
+              game.interludeImage = img;
+            } else {
+              game.interludeImage = null;
+            }
+            game.state = S.INTERLUDE;
+          } else {
+            startLevel(game, game.nextLevel);
+            void replenishPool(game);
+          }
+        }
+      }
+    } else if (game.state === S.INTERLUDE) {
+      renderInterludeScreen(ctx, game.interludeMessage, game.interludeImage);
+      if (consumeKey('Enter')) {
         startLevel(game, game.nextLevel);
         void replenishPool(game);
+      }
+    } else if (game.state === S.VICTORY) {
+      game.victoryDelay += delta;
+      renderVictoryScreen(ctx, game.score, game.highScore, game.victoryDelay);
+      if (game.victoryDelay > VICTORY_DELAY_MS) {
+        if (consumeKey('Enter')) {
+          // New Game+ — replay from level 1 in hard mode
+          startGame(game, true);
+        } else if (consumeKey('Escape')) {
+          game.activeProfile = null;
+          game.state = S.HOME;
+          game.onHome?.();
+        }
       }
     } else if (game.state === S.QUESTION) {
       // Game frozen — keep rendering the frozen frame behind the HTML modal

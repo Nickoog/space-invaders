@@ -69,7 +69,11 @@ export const BLINK_INTERVAL_MS = 100;   // invincibility blink interval (ms)
 export const MENU_BLINK_MS     = 500;   // menu/game-over text blink interval (ms)
 
 // Game states
-export const S = { LOADING: 'LOADING', HOME: 'HOME', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION', LEVEL_UP: 'LEVEL_UP' };
+export const S = { LOADING: 'LOADING', HOME: 'HOME', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION', LEVEL_UP: 'LEVEL_UP', VICTORY: 'VICTORY', INTERLUDE: 'INTERLUDE' };
+
+// Flavien's birthday personalisation
+export const MAX_LEVELS        = 17;   // number of levels before the victory screen
+export const VICTORY_DELAY_MS  = 2000; // delay before victory inputs are accepted (ms)
 
 // Level transition screen
 export const LEVEL_UP_MS = 1500; // duration of the "NIVEAU X" splash (ms)
@@ -78,5 +82,5 @@ export const LEVEL_UP_MS = 1500; // duration of the "NIVEAU X" splash (ms)
 export const DIFFICULTY_DELTA_MS   = 100;  // ms offset per correct/wrong answer
 export const DIFFICULTY_MAX_STEPS  = 4;    // max cumulative steps in each direction
 export const QUESTION_POOL_TARGET  = 3;    // questions to pre-generate and keep ready
-export const QUESTION_TIMEOUT_MS   = 3000; // ms before API call falls back to local bank
+export const QUESTION_TIMEOUT_MS   = 8000; // ms before API call falls back to local bank
 export const QUESTION_ANSWER_SEC   = 25;   // seconds the player has to answer

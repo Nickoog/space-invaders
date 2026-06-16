@@ -24,5 +24,11 @@ export function createGame(spriteMap: Map<number, HTMLImageElement | null>): Gam
     bonusMessageTimer: 0,
     activeProfile:    null,
     onHome:           null,
+    hardMode:                  false,
+    questionsInRound:          1,
+    questionsAnsweredInRound:  0,
+    victoryDelay:              0,
+    interludeMessage:          '',
+    interludeImage:            null,
   };
 }

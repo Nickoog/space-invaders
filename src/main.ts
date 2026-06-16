@@ -4,7 +4,7 @@ import { preloadSprites } from './api/pokeapi.js';
 import { renderLoadingScreen } from './screens.js';
 import { createGame } from './Game.js';
 import { startLoop } from './gameLoop.js';
-import { migrateFromLegacy } from './profiles.js';
+import { migrateFromLegacy, ensureFlavienProfile } from './profiles.js';
 import { showHomeScreen } from './ui/homeScreen.js';
 
 const canvas = document.getElementById('c') as HTMLCanvasElement;
@@ -24,6 +24,8 @@ preloadSprites(ids, (loaded, total) => {
 }).then(spriteMap => {
   // Silently migrate old single-profile localStorage data if present.
   migrateFromLegacy();
+  // Birthday gift: create Flavien's profile automatically on first launch.
+  ensureFlavienProfile();
 
   const game = createGame(spriteMap);
 

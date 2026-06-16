@@ -90,6 +90,9 @@ export async function preloadSprites(
   try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(cached)); } catch { /**/ }
   try { sessionStorage.setItem(CACHE_KEY_TYPES, JSON.stringify(typeCached)); } catch { /**/ }
 
+  const typeCount = Object.keys(typeCached).length;
+  console.debug(`[PRELOAD] Types en cache après chargement: ${typeCount}/${ids.length}`);
+
   // Ensure every requested ID has an entry (null = use fallback drawing)
   for (const id of ids) {
     if (!map.has(id)) map.set(id, null);
@@ -116,6 +119,9 @@ export function getIdsForLevel(level: number): { ids: number[]; correctFlags: bo
   let typeCached: Record<string, string> = {};
   try { typeCached = JSON.parse(sessionStorage.getItem(CACHE_KEY_TYPES) ?? '{}') as Record<string, string>; } catch { /**/ }
 
+  const cacheSize = Object.keys(typeCached).length;
+  console.debug(`[TYPE] Level ${level} → type cible: "${levelType}", entrées dans le cache: ${cacheSize}/${GEN1_COUNT}`);
+
   // Separate Gen1 Pokémon by whether they match the target type
   const correctIds: number[] = [];
   const wrongIds:   number[] = [];
@@ -126,8 +132,11 @@ export function getIdsForLevel(level: number): { ids: number[]; correctFlags: bo
     else wrongIds.push(id);
   }
 
+  console.debug(`[TYPE] Pokémon du bon type: ${correctIds.length}, mauvais type: ${wrongIds.length}, sans type: ${GEN1_COUNT - correctIds.length - wrongIds.length}`);
+
   // Fallback: type cache not yet populated (first session before preload completes)
   if (correctIds.length === 0) {
+    console.warn('[TYPE] FALLBACK: cache vide → tous les ennemis marqués correctType=true');
     const ids: number[] = [];
     for (let i = 0; i < TOTAL; i++) {
       ids.push((((level - 1) * TOTAL + i) % GEN1_COUNT) + 1);
@@ -138,14 +147,32 @@ export function getIdsForLevel(level: number): { ids: number[]; correctFlags: bo
   const wrongCount   = Math.floor(TOTAL * WRONG_TYPE_RATIO);
   const correctCount = TOTAL - wrongCount;
 
-  const pickedCorrect = shuffle(correctIds).slice(0, correctCount);
-  const pickedWrong   = shuffle(wrongIds).slice(0, wrongCount);
+  // Allow duplicates when there aren't enough unique Pokémon of the target type
+  const shuffledCorrect = shuffle(correctIds);
+  const pickedCorrect: number[] = Array.from({ length: correctCount }, (_, i) => shuffledCorrect[i % shuffledCorrect.length]!);
 
-  // Interleave so wrong-type enemies are spread across the grid
-  const combined = shuffle([...pickedCorrect, ...pickedWrong]);
+  const pickedWrong = shuffle(wrongIds).slice(0, wrongCount);
+
+  // Bottom SAFE_ROWS rows are always correct-type so the player is never forced to hit a wrong-type
+  // to progress. Wrong-type enemies only appear in the top (ENEMY_ROWS - SAFE_ROWS) rows.
+  const SAFE_ROWS       = 2;
+  const safeSlots       = SAFE_ROWS * ENEMY_COLS;          // 22 — rows 3 & 4 (bottom)
+  // rows 0-2 (top) = TOTAL - safeSlots = 33 slots
+  const correctForSafe  = pickedCorrect.slice(0, safeSlots);
+  const correctForMixed = pickedCorrect.slice(safeSlots);  // remaining 17 correct for top rows
+
+  const topSection    = shuffle([...correctForMixed, ...pickedWrong]); // 17 correct + 16 wrong = 33
+  const bottomSection = shuffle(correctForSafe);                        // 22 correct
+
+  // combined is row-major: indices 0–32 = rows 0-2 (top), 33–54 = rows 3-4 (bottom)
+  const combined = [...topSection, ...bottomSection];
 
   const ids          = combined;
   const correctFlags = combined.map(id => (typeCached[String(id)] ?? '') === levelType);
+
+  const wrongInGrid = correctFlags.filter(f => !f).length;
+  console.debug(`[TYPE] Grille: ${correctFlags.length - wrongInGrid} bon type, ${wrongInGrid} mauvais type`);
+  console.debug(`[TYPE] IDs mauvais type:`, combined.filter((_, i) => !correctFlags[i]).map(id => `#${id}(${typeCached[String(id)]})`).join(', '));
 
   return { ids, correctFlags, levelType };
 }

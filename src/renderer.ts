@@ -162,7 +162,7 @@ export function drawHUD(ctx: CanvasRenderingContext2D, game: GameState): void {
   ctx.fillText(`HI  ${String(highScore).padStart(4, '0')}`, W / 2, 30);
 
   ctx.textAlign = 'right';
-  ctx.fillText(`NIVEAU ${level}`, W - 20, 30);
+  ctx.fillText(`NIV. ${level} / 17`, W - 20, 30);
 
   ctx.textAlign = 'left';
   ctx.fillStyle = '#00ff44';
@@ -171,10 +171,10 @@ export function drawHUD(ctx: CanvasRenderingContext2D, game: GameState): void {
     drawMiniPokeball(ctx, 78 + i * 26, H - 20, 8);
   }
 
-  // Pokémon remaining to catch before level ends
-  const alive     = game.grid?.enemies.filter(e => e.alive).length ?? 0;
-  const threshold = Math.floor(ENEMY_COLS * ENEMY_ROWS * (1 - LEVEL_CLEAR_RATIO));
-  const toCatch   = Math.max(0, alive - threshold);
+  // Pokémon remaining to catch before level ends — only correct-type count
+  const aliveCorrect = game.grid?.enemies.filter(e => e.alive && e.correctType).length ?? 0;
+  const totalCorrect = game.grid?.enemies.filter(e => e.correctType).length ?? 0;
+  const toCatch      = Math.max(0, aliveCorrect - Math.floor(totalCorrect * (1 - LEVEL_CLEAR_RATIO)));
   ctx.textAlign = 'right';
   ctx.fillStyle = toCatch === 0 ? '#ffffff' : '#00ff44';
   ctx.fillText(`À attraper : ${toCatch}`, W - 20, H - 12);
@@ -189,6 +189,14 @@ export function drawHUD(ctx: CanvasRenderingContext2D, game: GameState): void {
     ctx.fillText(`Bonne réponse !  ${game.bonusMessage}`, W / 2, H / 2 - 60);
     ctx.globalAlpha = 1;
     ctx.font        = '16px monospace';
+  }
+
+  // Hard mode badge
+  if (game.hardMode) {
+    ctx.textAlign  = 'center';
+    ctx.fillStyle  = '#ff4444';
+    ctx.font       = 'bold 14px monospace';
+    ctx.fillText('★ MODE HARD', W / 2, H - 12);
   }
 
   ctx.fillStyle = '#00ff44';
