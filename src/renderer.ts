@@ -504,6 +504,11 @@ export function drawHUD(ctx: CanvasRenderingContext2D, game: GameState): void {
     drawMiniPokeball(ctx, 78 + i * 26, H - 20, 8);
   }
 
+  // Ammo counter
+  ctx.textAlign = 'center';
+  ctx.fillStyle = game.ammo > 0 ? '#00ff44' : '#ff4444';
+  ctx.fillText(`AMMO ×${game.ammo}`, W / 2, H - 12);
+
   // Pokémon remaining to catch before level ends — only correct-type count
   const aliveCorrect = game.grid?.enemies.filter(e => e.alive && e.correctType).length ?? 0;
   const totalCorrect = game.grid?.enemies.filter(e => e.correctType).length ?? 0;

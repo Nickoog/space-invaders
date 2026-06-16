@@ -31,8 +31,9 @@ export function createGrid(
         row, col,
         alive: true,
         caughtFlash: 0,
-        pokemonId:   ids[i] ?? 1,
-        correctType: correctFlags[i] ?? true,
+        pokemonId:    ids[i] ?? 1,
+        correctType:  correctFlags[i] ?? true,
+        pendingCapture: false,
       });
     }
   }

@@ -7,22 +7,24 @@ import {
   MAX_PLAYER_BULLETS, MAX_ENEMY_BULLETS,
   GAMEOVER_DELAY_MS, LEVEL_UP_MS, VICTORY_DELAY_MS, MAX_LEVELS,
   DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS,
-  ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO,
+  LEVEL_CLEAR_RATIO,
   WRONG_TYPE_PENALTY_MS,
+  AMMO_PER_CORRECT_QUIZ, AMMO_PER_CORRECT_RELOAD, AMMO_PER_WRONG_RELOAD,
+  AMMO_QUOTA_BASE, AMMO_QUOTA_PER_LEVEL, CAPTURE_QUESTION_SEC,
 } from './constants.js';
 import { updateProfile } from './profiles.js';
 import { keys, consumeKey } from './input.js';
 import { createPlayer, updatePlayer } from './Player.js';
-import { createGrid, updateGrid, getAlivePokemon, getGridBounds, getEnemyPos } from './PokemonGrid.js';
+import { createGrid, updateGrid, getGridBounds, getEnemyPos } from './PokemonGrid.js';
 import { createBullets, updateBullets } from './Bullets.js';
 import { getIdsForLevel, getLevelType } from './api/pokeapi.js';
 import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawHUD, drawPenaltyVignette, drawArenaBackground } from './renderer.js';
-import { renderMenuScreen, renderGameOverScreen, renderLevelUpScreen, renderVictoryScreen, renderInterludeScreen } from './screens.js';
+import { renderMenuScreen, renderGameOverScreen, renderLevelUpScreen, renderVictoryScreen, renderInterludeScreen, renderPreLevelQuizScreen } from './screens.js';
 import { overlap } from './collision.js';
 import { showQuestionModal } from './ui/modal.js';
 import { getRandomFallback, replenishPool } from './ai/questionService.js';
 import { getInterludeForLevel } from './interludes.js';
-import type { GameState } from './types.js';
+import type { GameState, Enemy } from './types.js';
 
 // ── State transitions ────────────────────────────────────────────────────────
 
@@ -33,9 +35,13 @@ function startLevel(game: GameState, level: number): void {
   const { ids, correctFlags, levelType } = getIdsForLevel(level);
   const wrongCount = correctFlags.filter(f => !f).length;
   console.debug(`[GRID] Niveau ${level} → ${correctFlags.length - wrongCount} correct, ${wrongCount} mauvais type`);
-  game.grid    = createGrid(level, ids, correctFlags, levelType);
-  game.bullets = createBullets();
-  game.state   = S.PLAYING;
+  game.grid      = createGrid(level, ids, correctFlags, levelType);
+  game.bullets   = createBullets();
+  game.ammo      = 0;
+  game.ammoQuota = AMMO_QUOTA_BASE + (level - 1) * AMMO_QUOTA_PER_LEVEL;
+  game.state     = S.PRE_LEVEL_QUIZ;
+  void replenishPool(game);
+  askPreLevelQuestion(game);
 }
 
 // Exported so homeScreen.ts can call it after profile selection.
@@ -51,9 +57,7 @@ export function startGame(game: GameState, hardMode = false): void {
   game.questionPool     = [];
   game.lastQuestionType = null;
   startLevel(game, 1);
-  game.state = S.PLAYING;
-  // Pre-generate questions in background — never awaited, never blocks the loop
-  void replenishPool(game);
+  // startLevel sets state to PRE_LEVEL_QUIZ and triggers the quiz
 }
 
 function endGame(game: GameState): void {
@@ -119,6 +123,71 @@ function askNextQuestion(game: GameState): void {
   });
 }
 
+// ── Pre-level quiz ───────────────────────────────────────────────────────────
+
+function askPreLevelQuestion(game: GameState): void {
+  const question = game.questionPool.shift() ?? getRandomFallback();
+  const quota    = game.ammoQuota;
+  showQuestionModal(question, (correct) => {
+    if (correct) game.ammo += AMMO_PER_CORRECT_QUIZ;
+    void replenishPool(game);
+    if (game.ammo >= quota) {
+      game.state = S.PLAYING;
+    } else {
+      askPreLevelQuestion(game);
+    }
+  }, {
+    title:         `⚡ NIVEAU ${game.level} — POKÉBALLS !`,
+    subtitle:      `Objectif : ${game.ammoQuota} pokéballs · Bonne réponse = +${AMMO_PER_CORRECT_QUIZ} · Mauvaise = +0`,
+    resultCorrect: `✅ +${AMMO_PER_CORRECT_QUIZ} pokéballs !`,
+    resultWrong:   '❌ Encore une question !',
+  });
+}
+
+// ── Capture question ─────────────────────────────────────────────────────────
+
+function triggerCaptureQuestion(game: GameState, enemy: Enemy): void {
+  enemy.pendingCapture = true;
+  game.state = S.QUESTION;
+  const question = game.questionPool.shift() ?? getRandomFallback();
+  const pts = ROW_POINTS[enemy.row] ?? 10;
+  showQuestionModal(question, (correct) => {
+    if (correct) {
+      enemy.caughtFlash      = CAUGHT_FLASH_MS;
+      game.score             += pts;
+      game.bonusMessage       = `+${pts} pts  ATTRAPÉ !`;
+      game.bonusMessageTimer  = BONUS_MESSAGE_MS;
+    } else {
+      enemy.pendingCapture = false;
+    }
+    game.state = S.PLAYING;
+    void replenishPool(game);
+  }, {
+    timerSec:      CAPTURE_QUESTION_SEC,
+    title:         '🎯 ATTRAPE-LE !',
+    subtitle:      'Bonne réponse = capture ! Mauvaise = Pokémon relâché.',
+    resultCorrect: `✅ POKÉMON ATTRAPÉ ! +${pts} pts`,
+    resultWrong:   '❌ Le Pokémon s\'est échappé...',
+  });
+}
+
+// ── Reload question ──────────────────────────────────────────────────────────
+
+function triggerReloadQuestion(game: GameState): void {
+  game.state = S.QUESTION;
+  const question = game.questionPool.shift() ?? getRandomFallback();
+  showQuestionModal(question, (correct) => {
+    game.ammo += correct ? AMMO_PER_CORRECT_RELOAD : AMMO_PER_WRONG_RELOAD;
+    game.state = S.PLAYING;
+    void replenishPool(game);
+  }, {
+    title:         '⚡ PLUS DE POKÉBALLS !',
+    subtitle:      `Bonne réponse = +${AMMO_PER_CORRECT_RELOAD} pokéballs · Mauvaise = +${AMMO_PER_WRONG_RELOAD}`,
+    resultCorrect: `✅ +${AMMO_PER_CORRECT_RELOAD} POKÉBALLS !`,
+    resultWrong:   `⚠️ +${AMMO_PER_WRONG_RELOAD} pokéball... Continue !`,
+  });
+}
+
 // ── Update ───────────────────────────────────────────────────────────────────
 
 // Advances game state by one fixed timestep. Mutates game.
@@ -131,10 +200,20 @@ function update(game: GameState, dt: number): void {
   // Bonus message timer
   if (game.bonusMessageTimer > 0) game.bonusMessageTimer -= dt;
 
-  // Player movement + fire (up to MAX_PLAYER_BULLETS simultaneous)
+  // Player movement — blocked from firing when ammo is empty
+  const noAmmo = game.ammo <= 0;
   const activePBullets = bullets.player.filter(b => b.active).length;
-  const newPlayerBullet = updatePlayer(player, dt, keys, activePBullets >= MAX_PLAYER_BULLETS);
-  if (newPlayerBullet) bullets.player.push(newPlayerBullet);
+  const newPlayerBullet = updatePlayer(player, dt, keys, activePBullets >= MAX_PLAYER_BULLETS || noAmmo);
+  if (newPlayerBullet) {
+    bullets.player.push(newPlayerBullet);
+    game.ammo--;
+  }
+
+  // Reload question when ammo runs out and player presses Space
+  if (noAmmo && consumeKey('Space')) {
+    triggerReloadQuestion(game);
+    return;
+  }
 
   // Enemy grid step + fire (capped at MAX_ENEMY_BULLETS simultaneous)
   const newEnemyBullet = updateGrid(grid, dt, game.level, game.difficultyOffset);
@@ -149,13 +228,13 @@ function update(game: GameState, dt: number): void {
   for (const b of bullets.player) {
     if (!b.active) continue;
     for (const e of grid.enemies) {
-      if (!e.alive || e.caughtFlash > 0) continue;
+      if (!e.alive || e.caughtFlash > 0 || e.pendingCapture) continue;
       const pos = getEnemyPos(grid, e);
       if (overlap(b.x, b.y, b.w, b.h, pos.x, pos.y, ENEMY_W, ENEMY_H)) {
-        e.caughtFlash = CAUGHT_FLASH_MS;
-        b.active      = false;
+        b.active = false;
         if (e.correctType) {
-          game.score += ROW_POINTS[e.row] ?? 10;
+          triggerCaptureQuestion(game, e);
+          return; // game is now QUESTION — exit update immediately
         } else {
           // Wrong type — trigger fire penalty, no score
           grid.penaltyTimer = WRONG_TYPE_PENALTY_MS;
@@ -181,8 +260,8 @@ function update(game: GameState, dt: number): void {
   if (gb && gb.bottom >= PLAYER_Y) { endGame(game); return; }
 
   // Level clear — only correct-type catches count toward progression
-  const aliveCorrect  = grid.enemies.filter(e => e.alive && e.correctType).length;
-  const totalCorrect  = grid.enemies.filter(e => e.correctType).length;
+  const aliveCorrect   = grid.enemies.filter(e => e.alive && e.correctType).length;
+  const totalCorrect   = grid.enemies.filter(e => e.correctType).length;
   const clearThreshold = Math.floor(totalCorrect * (1 - LEVEL_CLEAR_RATIO));
   if (aliveCorrect <= clearThreshold) {
     game.nextLevel    = game.level + 1;
@@ -274,7 +353,6 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
             game.state = S.INTERLUDE;
           } else {
             startLevel(game, game.nextLevel);
-            void replenishPool(game);
           }
         }
       }
@@ -282,7 +360,6 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
       renderInterludeScreen(ctx, game.interludeMessage, game.interludeImage);
       if (consumeKey('Enter')) {
         startLevel(game, game.nextLevel);
-        void replenishPool(game);
       }
     } else if (game.state === S.VICTORY) {
       game.victoryDelay += delta;
@@ -297,8 +374,11 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
           game.onHome?.();
         }
       }
+    } else if (game.state === S.PRE_LEVEL_QUIZ) {
+      // Quiz modal is open on top — canvas shows the quiz info screen behind it
+      renderPreLevelQuizScreen(ctx, game.ammo, game.ammoQuota, game.level, game.grid?.levelType ?? 'normal');
     } else if (game.state === S.QUESTION) {
-      // Game frozen — keep rendering the frozen frame behind the HTML modal
+      // Game frozen — keep rendering the frozen arena behind the HTML modal
       render(ctx, game);
     } else if (game.state === S.MENU) {
       if (consumeKey('Enter')) startGame(game);

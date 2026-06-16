@@ -24,7 +24,8 @@ export interface Enemy {
   alive: boolean;
   caughtFlash: number;
   pokemonId: number;
-  correctType: boolean; // true = matches the level's target type
+  correctType: boolean;    // true = matches the level's target type
+  pendingCapture: boolean; // true = capture question in progress
 }
 
 export interface Grid {
@@ -98,4 +99,7 @@ export interface GameState {
   victoryDelay: number;
   interludeMessage: string;
   interludeImage: HTMLImageElement | null;
+  // Ammo / quiz mechanic
+  ammo: number;      // current pokéballs available to fire
+  ammoQuota: number; // pokéballs needed to start this level (pre-level quiz target)
 }

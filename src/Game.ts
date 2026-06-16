@@ -30,5 +30,7 @@ export function createGame(spriteMap: Map<number, HTMLImageElement | null>): Gam
     victoryDelay:              0,
     interludeMessage:          '',
     interludeImage:            null,
+    ammo:                      0,
+    ammoQuota:                 0,
   };
 }

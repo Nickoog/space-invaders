@@ -69,7 +69,7 @@ export const BLINK_INTERVAL_MS = 100;   // invincibility blink interval (ms)
 export const MENU_BLINK_MS     = 500;   // menu/game-over text blink interval (ms)
 
 // Game states
-export const S = { LOADING: 'LOADING', HOME: 'HOME', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION', LEVEL_UP: 'LEVEL_UP', VICTORY: 'VICTORY', INTERLUDE: 'INTERLUDE' };
+export const S = { LOADING: 'LOADING', HOME: 'HOME', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION', LEVEL_UP: 'LEVEL_UP', VICTORY: 'VICTORY', INTERLUDE: 'INTERLUDE', PRE_LEVEL_QUIZ: 'PRE_LEVEL_QUIZ' };
 
 // Flavien's birthday personalisation
 export const MAX_LEVELS        = 17;   // number of levels before the victory screen
@@ -77,6 +77,14 @@ export const VICTORY_DELAY_MS  = 2000; // delay before victory inputs are accept
 
 // Level transition screen
 export const LEVEL_UP_MS = 1500; // duration of the "NIVEAU X" splash (ms)
+
+// Ammo / quiz mechanic
+export const AMMO_PER_CORRECT_QUIZ   = 3;   // pokéballs gained per correct answer in pre-level quiz
+export const AMMO_PER_CORRECT_RELOAD = 3;   // pokéballs gained per correct reload question
+export const AMMO_PER_WRONG_RELOAD   = 1;   // pokéballs gained per wrong reload question
+export const AMMO_QUOTA_BASE         = 6;   // base ammo quota at level 1
+export const AMMO_QUOTA_PER_LEVEL    = 2;   // additional ammo quota per level
+export const CAPTURE_QUESTION_SEC    = 15;  // timer for capture confirmation questions (shorter)
 
 // AI question feature
 export const DIFFICULTY_DELTA_MS   = 100;  // ms offset per correct/wrong answer

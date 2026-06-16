@@ -1,5 +1,13 @@
 import type { QuestionData } from '../types.js';
 import { QUESTION_ANSWER_SEC } from '../constants.js';
+
+export interface QuestionModalOptions {
+  timerSec?: number;
+  title?: string;
+  subtitle?: string;
+  resultCorrect?: string;
+  resultWrong?: string;
+}
 import { ONBOARDING_QUESTIONS } from '../ai/onboarding.js';
 
 // ── Shared styles (injected once) ────────────────────────────────────────────
@@ -205,7 +213,16 @@ export function showOnboarding(onComplete: (interests: string[], age: number | n
 export function showQuestionModal(
   question: QuestionData,
   onResult: (correct: boolean) => void,
+  options: QuestionModalOptions = {},
 ): void {
+  const {
+    timerSec     = QUESTION_ANSWER_SEC,
+    title        = '⚡ TOUCHÉ ! 😏',
+    subtitle     = 'Bonne réponse = vie sauvée · Mauvaise = vie perdue',
+    resultCorrect = '✅ BONNE RÉPONSE ! Ennemis ralentis.',
+    resultWrong   = '❌ MAUVAISE RÉPONSE ! Ennemis accélérés.',
+  } = options;
+
   injectStyles();
 
   const overlay = document.createElement('div');
@@ -213,7 +230,7 @@ export function showQuestionModal(
   document.body.appendChild(overlay);
 
   let answered = false;
-  let secondsLeft = QUESTION_ANSWER_SEC;
+  let secondsLeft = timerSec;
   let timerHandle: ReturnType<typeof setInterval>;
 
   function resolve(correct: boolean): void {
@@ -223,9 +240,7 @@ export function showQuestionModal(
 
     const resultEl = overlay.querySelector<HTMLElement>('.ai-result');
     if (resultEl) {
-      resultEl.textContent = correct
-        ? '✅ BONNE RÉPONSE ! Ennemis ralentis.'
-        : '❌ MAUVAISE RÉPONSE ! Ennemis accélérés.';
+      resultEl.textContent = correct ? resultCorrect : resultWrong;
       resultEl.className = `ai-result ${correct ? 'correct' : 'wrong'}`;
     }
 
@@ -235,16 +250,14 @@ export function showQuestionModal(
     }, 1400);
   }
 
-  const humorTag = question.humor_level === 'absurd' ? ' 🤪' : ' 😏';
-
   const answersHtml = question.choices.map((c, i) =>
     `<button class="ai-choice" data-idx="${i}">${String.fromCharCode(65 + i)}. ${c}</button>`
   ).join('');
 
   overlay.innerHTML = `
     <div class="ai-box">
-      <div class="ai-title">⚡ TOUCHÉ !${humorTag}</div>
-      <div class="ai-subtitle">Bonne réponse = vie sauvée · Mauvaise = vie perdue</div>
+      <div class="ai-title">${title}</div>
+      <div class="ai-subtitle">${subtitle}</div>
       <div class="ai-timer-bar" id="q-timer-bar"></div>
       <div class="ai-question">${question.question}</div>
       <div id="q-answers">${answersHtml}</div>
@@ -258,7 +271,7 @@ export function showQuestionModal(
 
   timerHandle = setInterval(() => {
     secondsLeft--;
-    const pct = Math.max(0, (secondsLeft / QUESTION_ANSWER_SEC) * 100);
+    const pct = Math.max(0, (secondsLeft / timerSec) * 100);
     bar.style.width = `${pct}%`;
     if (pct < 30) bar.style.background = '#ff4444';
     else if (pct < 60) bar.style.background = '#ffaa00';
