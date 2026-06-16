@@ -1,4 +1,4 @@
-import { W, H, MENU_BLINK_MS, GAMEOVER_DELAY_MS, LEVEL_UP_MS, ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO, WRONG_TYPE_RATIO, MAX_LEVELS, VICTORY_DELAY_MS } from './constants.js';
+import { W, H, MENU_BLINK_MS, GAMEOVER_DELAY_MS, ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO, WRONG_TYPE_RATIO, MAX_LEVELS, VICTORY_DELAY_MS } from './constants.js';
 import { TYPE_LABELS, TYPE_COLORS } from './api/pokeapi.js';
 
 export function renderLoadingScreen(ctx: CanvasRenderingContext2D, loaded: number, total: number): void {
@@ -8,15 +8,15 @@ export function renderLoadingScreen(ctx: CanvasRenderingContext2D, loaded: numbe
   ctx.textAlign = 'center';
 
   ctx.fillStyle = '#ff4444';
-  ctx.font = 'bold 42px monospace';
+  ctx.font = '24px "Press Start 2P", monospace';
   ctx.fillText('POKEMON', W / 2, 170);
 
   ctx.fillStyle = '#ffff00';
-  ctx.font = 'bold 42px monospace';
+  ctx.font = '24px "Press Start 2P", monospace';
   ctx.fillText('INVADERS', W / 2, 222);
 
   ctx.fillStyle = '#aaffaa';
-  ctx.font = '20px monospace';
+  ctx.font = '13px "Press Start 2P", monospace';
   ctx.fillText('Chargement du Pokédex…', W / 2, 300);
 
   // Progress bar
@@ -29,7 +29,7 @@ export function renderLoadingScreen(ctx: CanvasRenderingContext2D, loaded: numbe
   ctx.fillRect(bx + 2, by + 2, fill, bh - 4);
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = '16px monospace';
+  ctx.font = '11px "Press Start 2P", monospace';
   ctx.fillText(`${loaded} / ${total}`, W / 2, 366);
 
   ctx.textAlign = 'left';
@@ -42,27 +42,27 @@ export function renderMenuScreen(ctx: CanvasRenderingContext2D, highScore: numbe
   ctx.textAlign = 'center';
 
   ctx.fillStyle = '#ff4444';
-  ctx.font = 'bold 50px monospace';
+  ctx.font = '26px "Press Start 2P", monospace';
   ctx.fillText('POKEMON', W / 2, 158);
 
   ctx.fillStyle = '#ffff00';
-  ctx.font = 'bold 50px monospace';
+  ctx.font = '26px "Press Start 2P", monospace';
   ctx.fillText('INVADERS', W / 2, 214);
 
   ctx.fillStyle = '#aaffaa';
-  ctx.font = '20px monospace';
+  ctx.font = '13px "Press Start 2P", monospace';
   ctx.fillText('← → pour bouger', W / 2, 308);
   ctx.fillText('ESPACE pour lancer une Pokéball', W / 2, 342);
 
   if (Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 22px monospace';
+    ctx.font = '13px "Press Start 2P", monospace';
     ctx.fillText('— APPUYER SUR ENTRÉE —', W / 2, 426);
   }
 
   if (highScore > 0) {
     ctx.fillStyle = '#ffff00';
-    ctx.font = '18px monospace';
+    ctx.font = '12px "Press Start 2P", monospace';
     ctx.fillText(`MEILLEUR : ${String(highScore).padStart(4, '0')} Pokémon capturés`, W / 2, 504);
   }
 
@@ -82,28 +82,28 @@ export function renderLevelUpScreen(ctx: CanvasRenderingContext2D, nextLevel: nu
   if (won) {
     // Victory transition — player just finished level 17
     ctx.fillStyle = '#ffff44';
-    ctx.font = 'bold 54px monospace';
+    ctx.font = '30px "Press Start 2P", monospace';
     ctx.fillText('VICTOIRE !', W / 2, H / 2 - 60);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 24px monospace';
+    ctx.font = '14px "Press Start 2P", monospace';
     ctx.fillText('Tu as terminé les 17 niveaux !', W / 2, H / 2 + 10);
 
     ctx.fillStyle = '#00ff44';
-    ctx.font = '18px monospace';
+    ctx.font = '12px "Press Start 2P", monospace';
     ctx.fillText('Félicitations, Flavien !', W / 2, H / 2 + 50);
   } else {
     ctx.fillStyle = '#ffff44';
-    ctx.font = 'bold 28px monospace';
+    ctx.font = '16px "Press Start 2P", monospace';
     ctx.fillText('NIVEAU', W / 2, H / 2 - 80);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 90px monospace';
+    ctx.font = '48px "Press Start 2P", monospace';
     ctx.fillText(String(nextLevel), W / 2, H / 2 + 10);
 
     if (nextLevel === MAX_LEVELS) {
       ctx.fillStyle = '#ff4444';
-      ctx.font = 'bold 20px monospace';
+      ctx.font = '12px "Press Start 2P", monospace';
       ctx.fillText('DERNIER NIVEAU !', W / 2, H / 2 + 58);
     }
 
@@ -114,11 +114,11 @@ export function renderLevelUpScreen(ctx: CanvasRenderingContext2D, nextLevel: nu
     const toCatch      = correctTotal - Math.floor(correctTotal * (1 - LEVEL_CLEAR_RATIO));
     const typeY        = nextLevel === MAX_LEVELS ? H / 2 + 88 : H / 2 + 70;
     ctx.fillStyle = typeColor;
-    ctx.font = 'bold 20px monospace';
+    ctx.font = '12px "Press Start 2P", monospace';
     ctx.fillText(`Attrape ${toCatch} Pokémon ${typeLabel} !`, W / 2, typeY);
 
     ctx.fillStyle = '#888888';
-    ctx.font = '16px monospace';
+    ctx.font = '11px "Press Start 2P", monospace';
     ctx.fillText('Évite les autres types', W / 2, typeY + 30);
   }
 
@@ -171,33 +171,33 @@ export function renderVictoryScreen(ctx: CanvasRenderingContext2D, score: number
   ctx.textAlign = 'center';
 
   ctx.fillStyle = '#ff4444';
-  ctx.font = 'bold 42px monospace';
+  ctx.font = '22px "Press Start 2P", monospace';
   ctx.fillText('JOYEUX ANNIVERSAIRE', W / 2, 130);
 
   ctx.fillStyle = '#ffff44';
-  ctx.font = 'bold 60px monospace';
+  ctx.font = '36px "Press Start 2P", monospace';
   ctx.fillText('FLAVIEN !', W / 2, 200);
 
   ctx.fillStyle = '#00ff44';
-  ctx.font = 'bold 36px monospace';
+  ctx.font = '20px "Press Start 2P", monospace';
   ctx.fillText('17 ANS !', W / 2, 258);
 
   ctx.fillStyle = '#aaffaa';
-  ctx.font = '20px monospace';
+  ctx.font = '13px "Press Start 2P", monospace';
   ctx.fillText(`Score final : ${score}`, W / 2, 320);
   if (score >= highScore && score > 0) {
     ctx.fillStyle = '#ffff44';
-    ctx.font = 'bold 18px monospace';
+    ctx.font = '11px "Press Start 2P", monospace';
     ctx.fillText('★ NOUVEAU RECORD ★', W / 2, 350);
   }
 
   if (delay > VICTORY_DELAY_MS) {
     if (Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 18px monospace';
+      ctx.font = '11px "Press Start 2P", monospace';
       ctx.fillText('[ ENTRÉE ]  Rejouer en MODE HARD', W / 2, 430);
       ctx.fillStyle = '#888888';
-      ctx.font = '16px monospace';
+      ctx.font = '11px "Press Start 2P", monospace';
       ctx.fillText('[ ÉCHAP ]  Retour au menu', W / 2, 462);
     }
   }
@@ -221,12 +221,12 @@ export function renderInterludeScreen(ctx: CanvasRenderingContext2D, message: st
   }
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = '18px monospace';
+  ctx.font = '12px "Press Start 2P", monospace';
   wrapText(ctx, message, W / 2, H * 0.74, W - 80, 28);
 
   if (Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {
     ctx.fillStyle = '#00ff44';
-    ctx.font = 'bold 16px monospace';
+    ctx.font = '10px "Press Start 2P", monospace';
     ctx.fillText('[ ENTRÉE pour continuer ]', W / 2, H - 24);
   }
 
@@ -240,21 +240,21 @@ export function renderGameOverScreen(ctx: CanvasRenderingContext2D, score: numbe
   ctx.textAlign = 'center';
 
   ctx.fillStyle = '#ff4444';
-  ctx.font = 'bold 54px monospace';
+  ctx.font = '30px "Press Start 2P", monospace';
   ctx.fillText('GAME OVER', W / 2, 210);
 
   ctx.fillStyle = '#ffff00';
-  ctx.font = '24px monospace';
+  ctx.font = '24px "Press Start 2P", monospace';
   ctx.fillText(`Capturés : ${score}`, W / 2, 296);
 
   ctx.fillStyle = '#aaffaa';
-  ctx.font = '22px monospace';
+  ctx.font = '14px "Press Start 2P", monospace';
   ctx.fillText(`Meilleur : ${highScore}`, W / 2, 336);
   ctx.fillText(`Niveau atteint : ${level}`, W / 2, 374);
 
   if (delay > GAMEOVER_DELAY_MS && Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 22px monospace';
+    ctx.font = '13px "Press Start 2P", monospace';
     ctx.fillText('ENTRÉE pour rejouer', W / 2, 452);
   }
 

@@ -1,8 +1,12 @@
 import { GEN1_COUNT, ENEMY_COLS, ENEMY_ROWS, POKEMON_LOAD_TIMEOUT_MS, WRONG_TYPE_RATIO } from '../constants.js';
 
 const TOTAL = ENEMY_COLS * ENEMY_ROWS; // 55
-const CACHE_KEY       = 'pokemon_invaders_sprites_v1';
 const CACHE_KEY_TYPES = 'pokemon_invaders_types_v1';
+
+// Official artwork sprites — high-res PNGs, URL is predictable from ID alone.
+function officialArtworkUrl(id: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+}
 
 // ── Level type rotation ───────────────────────────────────────────────────────
 
@@ -46,9 +50,8 @@ export async function preloadSprites(
   ids: number[],
   onProgress?: (loaded: number, total: number) => void,
 ): Promise<Map<number, HTMLImageElement | null>> {
-  let cached: Record<string, string> = {};
-  try { cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) ?? '{}') as Record<string, string>; } catch { /**/ }
-
+  // Sprite URLs are constructed directly — no API call needed for sprites.
+  // Type data still fetched from API and cached in sessionStorage.
   let typeCached: Record<string, string> = {};
   try { typeCached = JSON.parse(sessionStorage.getItem(CACHE_KEY_TYPES) ?? '{}') as Record<string, string>; } catch { /**/ }
 
@@ -58,23 +61,17 @@ export async function preloadSprites(
   const loadAll = Promise.allSettled(
     ids.map(async id => {
       try {
-        let url = cached[id];
-        if (!url || !typeCached[id]) {
+        // Fetch type data from API only if not already cached
+        if (!typeCached[id]) {
           const res  = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
           const data = await res.json() as {
-            sprites: { front_default: string };
             types: Array<{ type: { name: string } }>;
           };
-          url = data.sprites.front_default;
-          if (url) cached[id] = url;
-          // Extract primary type — persisted for getIdsForLevel()
-          const pokemonType = data.types[0]?.type.name ?? 'normal';
-          typeCached[id] = pokemonType;
+          typeCached[id] = data.types[0]?.type.name ?? 'normal';
         }
-        if (url) {
-          const img = await loadImage(url);
-          map.set(id, img);
-        }
+        // Official artwork — high-res PNG, URL derived from ID directly
+        const img = await loadImage(officialArtworkUrl(id));
+        map.set(id, img);
       } catch { /**/ }
       loaded++;
       onProgress?.(loaded, ids.length);
@@ -87,7 +84,6 @@ export async function preloadSprites(
 
   await Promise.race([loadAll, timeout]);
 
-  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(cached)); } catch { /**/ }
   try { sessionStorage.setItem(CACHE_KEY_TYPES, JSON.stringify(typeCached)); } catch { /**/ }
 
   const typeCount = Object.keys(typeCached).length;

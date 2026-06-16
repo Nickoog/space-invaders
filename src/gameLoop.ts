@@ -16,7 +16,7 @@ import { createPlayer, updatePlayer } from './Player.js';
 import { createGrid, updateGrid, getAlivePokemon, getGridBounds, getEnemyPos } from './PokemonGrid.js';
 import { createBullets, updateBullets } from './Bullets.js';
 import { getIdsForLevel, getLevelType } from './api/pokeapi.js';
-import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawHUD, drawPenaltyVignette } from './renderer.js';
+import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawHUD, drawPenaltyVignette, drawArenaBackground } from './renderer.js';
 import { renderMenuScreen, renderGameOverScreen, renderLevelUpScreen, renderVictoryScreen, renderInterludeScreen } from './screens.js';
 import { overlap } from './collision.js';
 import { showQuestionModal } from './ui/modal.js';
@@ -194,8 +194,7 @@ function update(game: GameState, dt: number): void {
 // ── Render ───────────────────────────────────────────────────────────────────
 
 function render(ctx: CanvasRenderingContext2D, game: GameState): void {
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, W, H);
+  drawArenaBackground(ctx, game.grid?.levelType ?? 'poison');
 
   if (!game.player || !game.grid || !game.bullets) return;
 
@@ -207,7 +206,7 @@ function render(ctx: CanvasRenderingContext2D, game: GameState): void {
   }
 
   for (const b of game.bullets.player) drawPokeball(ctx, b);
-  for (const b of game.bullets.enemy)  drawEnemyBullet(ctx, b);
+  for (const b of game.bullets.enemy)  drawEnemyBullet(ctx, b, game.grid.levelType);
 
   drawHUD(ctx, game);
 
