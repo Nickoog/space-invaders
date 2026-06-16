@@ -10,7 +10,7 @@ import {
   LEVEL_CLEAR_RATIO,
   WRONG_TYPE_PENALTY_MS,
   AMMO_PER_CORRECT_QUIZ, AMMO_PER_CORRECT_RELOAD, AMMO_PER_WRONG_RELOAD,
-  AMMO_QUOTA_BASE, AMMO_QUOTA_PER_LEVEL, CAPTURE_QUESTION_SEC,
+  AMMO_QUOTA_BASE, AMMO_QUOTA_PER_LEVEL,
 } from './constants.js';
 import { updateProfile } from './profiles.js';
 import { keys, consumeKey } from './input.js';
@@ -24,7 +24,7 @@ import { overlap } from './collision.js';
 import { showQuestionModal } from './ui/modal.js';
 import { getRandomFallback, replenishPool } from './ai/questionService.js';
 import { getInterludeForLevel } from './interludes.js';
-import type { GameState, Enemy } from './types.js';
+import type { GameState } from './types.js';
 
 // ── State transitions ────────────────────────────────────────────────────────
 
@@ -144,33 +144,6 @@ function askPreLevelQuestion(game: GameState): void {
   });
 }
 
-// ── Capture question ─────────────────────────────────────────────────────────
-
-function triggerCaptureQuestion(game: GameState, enemy: Enemy): void {
-  enemy.pendingCapture = true;
-  game.state = S.QUESTION;
-  const question = game.questionPool.shift() ?? getRandomFallback();
-  const pts = ROW_POINTS[enemy.row] ?? 10;
-  showQuestionModal(question, (correct) => {
-    if (correct) {
-      enemy.caughtFlash      = CAUGHT_FLASH_MS;
-      game.score             += pts;
-      game.bonusMessage       = `+${pts} pts  ATTRAPÉ !`;
-      game.bonusMessageTimer  = BONUS_MESSAGE_MS;
-    } else {
-      enemy.pendingCapture = false;
-    }
-    game.state = S.PLAYING;
-    void replenishPool(game);
-  }, {
-    timerSec:      CAPTURE_QUESTION_SEC,
-    title:         '🎯 ATTRAPE-LE !',
-    subtitle:      'Bonne réponse = capture ! Mauvaise = Pokémon relâché.',
-    resultCorrect: `✅ POKÉMON ATTRAPÉ ! +${pts} pts`,
-    resultWrong:   '❌ Le Pokémon s\'est échappé...',
-  });
-}
-
 // ── Reload question ──────────────────────────────────────────────────────────
 
 function triggerReloadQuestion(game: GameState): void {
@@ -228,13 +201,13 @@ function update(game: GameState, dt: number): void {
   for (const b of bullets.player) {
     if (!b.active) continue;
     for (const e of grid.enemies) {
-      if (!e.alive || e.caughtFlash > 0 || e.pendingCapture) continue;
+      if (!e.alive || e.caughtFlash > 0) continue;
       const pos = getEnemyPos(grid, e);
       if (overlap(b.x, b.y, b.w, b.h, pos.x, pos.y, ENEMY_W, ENEMY_H)) {
-        b.active = false;
+        e.caughtFlash = CAUGHT_FLASH_MS;
+        b.active      = false;
         if (e.correctType) {
-          triggerCaptureQuestion(game, e);
-          return; // game is now QUESTION — exit update immediately
+          game.score += ROW_POINTS[e.row] ?? 10;
         } else {
           // Wrong type — trigger fire penalty, no score
           grid.penaltyTimer = WRONG_TYPE_PENALTY_MS;
