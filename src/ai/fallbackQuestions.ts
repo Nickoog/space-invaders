@@ -1,146 +1,322 @@
 import type { QuestionData } from '../types.js';
 
-// Local question bank — used when the API is unavailable or the pool is empty.
-// All questions are multiple_choice, in French, humor mandatory.
+// ~40 curated fallback questions, interleaved across themes so consecutive
+// questions are always from different categories.
+// Themes: Pokémon (P), Gaming (G), Réseaux sociaux (R), Culture ado (C), Drôle (D)
+
 export const FALLBACK_QUESTIONS: QuestionData[] = [
+
+  // P
   {
-    question: "Tu joues à Space Invaders depuis 5 minutes et tu te fais déjà toucher. Quel est le nom du champion du monde de Space Invaders en 1980 ?",
+    question: 'Quel est le type de Ronflex ?',
     type: 'multiple_choice',
-    choices: ['Toshiyuki Takahashi', 'Thierry La Fronde', 'Mario Bros', 'Toi (dans tes rêves)'],
-    correct_answer: 'Toshiyuki Takahashi',
+    choices: ['Normal', 'Eau', 'Psy', 'Sol'],
+    correct_answer: 'Normal',
     humor_level: 'mild',
   },
+  // G
   {
-    question: "Un Pokémon frappe à ta porte à 3h du matin. Il veut de la tartiflette. Lequel est clairement le plus susceptible de faire ça ?",
+    question: 'En quelle année est sorti Minecraft ?',
     type: 'multiple_choice',
-    choices: ['Ronflex (il avait faim)', 'Pikachu (insomniaque notoire)', 'Mewtwo (il est en crise existentielle)', 'Magicarpe (il saute partout, logique)'],
-    correct_answer: 'Ronflex (il avait faim)',
+    choices: ['2011', '2009', '2013', '2008'],
+    correct_answer: '2011',
+    humor_level: 'mild',
+  },
+  // R
+  {
+    question: 'Quelle entreprise a créé TikTok ?',
+    type: 'multiple_choice',
+    choices: ['ByteDance', 'Meta', 'Tencent', 'Alibaba'],
+    correct_answer: 'ByteDance',
+    humor_level: 'mild',
+  },
+  // C
+  {
+    question: 'Quel acteur joue Iron Man dans le MCU ?',
+    type: 'multiple_choice',
+    choices: ['Robert Downey Jr.', 'Chris Evans', 'Chris Hemsworth', 'Mark Ruffalo'],
+    correct_answer: 'Robert Downey Jr.',
+    humor_level: 'mild',
+  },
+  // D
+  {
+    question: 'Si Pikachu mange des pâtes, c\'est quoi ?',
+    type: 'multiple_choice',
+    choices: ['Pâtachu', 'Élec-tagliatelles', 'Ravichu', 'Spaghé-lectrique'],
+    correct_answer: 'Pâtachu',
     humor_level: 'absurd',
   },
+
+  // P
   {
-    question: "En France, le fromage c'est sacré — on en compte environ combien de variétés ?",
+    question: 'Combien de Pokémon dans la Gen 1 ?',
     type: 'multiple_choice',
-    choices: ['Environ 1 000', 'Exactement 42', 'Environ 246', 'Plus de 5 000'],
-    correct_answer: 'Environ 1 000',
-    humor_level: 'mild',
-  },
-  {
-    question: "Tu prends un penalty en finale de la Coupe du Monde. Le gardien a deviné ton côté. Qu'est-ce que tu fais ?",
-    type: 'multiple_choice',
-    choices: ['Tire quand même, au centre', 'Change de côté à la dernière seconde', 'Prétends être blessé', 'Passes la balle à ton pote'],
-    correct_answer: 'Tire quand même, au centre',
-    humor_level: 'mild',
-  },
-  {
-    question: "Quelle est la capitale de la France ? (Oui, on commence facile, t'as failli crever quand même.)",
-    type: 'multiple_choice',
-    choices: ['Paris', 'Lyon', 'Marseille', 'Versailles'],
-    correct_answer: 'Paris',
-    humor_level: 'mild',
-  },
-  {
-    question: "Dans les années 80, quel jeu d'arcade a popularisé les high scores publics et rendu les gens accros à gaspiller leurs pièces de 1 franc ?",
-    type: 'multiple_choice',
-    choices: ['Space Invaders', 'Pac-Man', 'Donkey Kong', 'Pong'],
-    correct_answer: 'Space Invaders',
-    humor_level: 'mild',
-  },
-  {
-    question: "Scientifiquement, combien de temps peut-on regarder une pizza refroidir avant de craquer et de la manger ?",
-    type: 'multiple_choice',
-    choices: ['3 à 7 secondes', '30 secondes si t\'as de la volonté', 'Jamais, c\'est impossible', '2 minutes si t\'es stoïcien'],
-    correct_answer: 'Jamais, c\'est impossible',
-    humor_level: 'absurd',
-  },
-  {
-    question: "Quel duo français a sorti l'album « Homework » en 1997 avec le tube « Around the World » ?",
-    type: 'multiple_choice',
-    choices: ['Daft Punk', 'Air', 'Justice', 'Phoenix'],
-    correct_answer: 'Daft Punk',
-    humor_level: 'mild',
-  },
-  {
-    question: "Le « dab » est une célébration popularisée dans quel sport avant de contaminer le monde entier ?",
-    type: 'multiple_choice',
-    choices: ['Football américain', 'Basketball', 'Athlétisme', 'Pétanque professionnelle'],
-    correct_answer: 'Football américain',
-    humor_level: 'mild',
-  },
-  {
-    question: "Si tu devais survivre une semaine avec UN seul aliment, lequel serait le plus sage nutritionnellement ?",
-    type: 'multiple_choice',
-    choices: ['Pommes de terre', 'Pizza', 'Barres chocolatées', 'Eau gazeuse'],
-    correct_answer: 'Pommes de terre',
-    humor_level: 'absurd',
-  },
-  {
-    question: "Dans « Star Wars », quel personnage dit la réplique culte « Je suis ton père » ?",
-    type: 'multiple_choice',
-    choices: ['Dark Vador', 'Yoda', 'Obi-Wan Kenobi', 'R2-D2 (en bip)'],
-    correct_answer: 'Dark Vador',
-    humor_level: 'mild',
-  },
-  {
-    question: "En musique, la note « Do » en anglais s'appelle comment ?",
-    type: 'multiple_choice',
-    choices: ['C', 'D', 'G', 'A'],
-    correct_answer: 'C',
-    humor_level: 'mild',
-  },
-  {
-    question: "Tu croises Cristiano Ronaldo dans la rue. Il te dit « SIUUU ! ». Tu réponds quoi ?",
-    type: 'multiple_choice',
-    choices: ['SIUUU ! (réflexe pavlovien)', 'Rien, tu fais semblant de pas le reconnaître', 'Tu demandes un selfie pour Insta', 'Tu lui rappelles que Messi a plus de Ballons d\'Or'],
-    correct_answer: 'SIUUU ! (réflexe pavlovien)',
-    humor_level: 'absurd',
-  },
-  {
-    question: "Quel pays a inventé le cinéma avec les frères Lumière ?",
-    type: 'multiple_choice',
-    choices: ['La France', 'Les États-Unis', 'L\'Angleterre', 'L\'Allemagne'],
-    correct_answer: 'La France',
-    humor_level: 'mild',
-  },
-  {
-    question: "En informatique, combien font 2 puissance 10 ? (Aka la question que tout dev connaît en dormant)",
-    type: 'multiple_choice',
-    choices: ['1024', '1000', '2048', '512'],
-    correct_answer: '1024',
-    humor_level: 'mild',
-  },
-  {
-    question: "La chaîne de restauration rapide française « Quick » a été rachetée et rebaptisée… quoi ?",
-    type: 'multiple_choice',
-    choices: ['Burger King', 'McDonald\'s', 'Five Guys', 'KFC'],
-    correct_answer: 'Burger King',
-    humor_level: 'mild',
-  },
-  {
-    question: "Un alien débarque sur Terre et goûte un croissant au beurre parisien pour la première fois. Sa réaction est :",
-    type: 'multiple_choice',
-    choices: ['Il annule l\'invasion immédiatement', 'Il repart chercher sa famille', 'Il négocie un traité de paix contre la recette', 'Il pleure de joie et appelle sa maman alien'],
-    correct_answer: 'Il annule l\'invasion immédiatement',
-    humor_level: 'absurd',
-  },
-  {
-    question: "Quel est le sport le plus regardé au monde ?",
-    type: 'multiple_choice',
-    choices: ['Football', 'Cricket', 'Basketball', 'Tennis'],
-    correct_answer: 'Football',
-    humor_level: 'mild',
-  },
-  {
-    question: "Dans quel genre musical retrouve-t-on les artistes Daft Punk, David Guetta et Martin Garrix ?",
-    type: 'multiple_choice',
-    choices: ['Électro / EDM', 'Rock indé', 'Jazz fusion', 'Variété française de compét\''],
-    correct_answer: 'Électro / EDM',
-    humor_level: 'mild',
-  },
-  {
-    question: "Combien y a-t-il de Pokémon dans la première génération ? (Celle qui compte vraiment selon les puristes.)",
-    type: 'multiple_choice',
-    choices: ['151', '152', '250', '386'],
+    choices: ['151', '150', '152', '251'],
     correct_answer: '151',
+    humor_level: 'mild',
+  },
+  // G
+  {
+    question: 'Quel jeu a popularisé le Battle Royale ?',
+    type: 'multiple_choice',
+    choices: ['PUBG', 'Fortnite', 'Warzone', 'Apex Legends'],
+    correct_answer: 'PUBG',
+    humor_level: 'mild',
+  },
+  // R
+  {
+    question: 'En quelle année Instagram a été racheté par Facebook ?',
+    type: 'multiple_choice',
+    choices: ['2012', '2014', '2010', '2016'],
+    correct_answer: '2012',
+    humor_level: 'mild',
+  },
+  // C
+  {
+    question: 'Squid Game vient de quel pays ?',
+    type: 'multiple_choice',
+    choices: ['Corée du Sud', 'Japon', 'Chine', 'Thaïlande'],
+    correct_answer: 'Corée du Sud',
+    humor_level: 'mild',
+  },
+  // D
+  {
+    question: 'Quel est le meilleur Pokémon Gen 1 selon les fans ?',
+    type: 'multiple_choice',
+    choices: ['Mewtwo', 'Pikachu', 'Ronflex', 'Magicarpe (ironie)'],
+    correct_answer: 'Mewtwo',
+    humor_level: 'absurd',
+  },
+
+  // P
+  {
+    question: 'Quel Pokémon est le n°1 du Pokédex ?',
+    type: 'multiple_choice',
+    choices: ['Bulbizarre', 'Salamèche', 'Carapuce', 'Pikachu'],
+    correct_answer: 'Bulbizarre',
+    humor_level: 'mild',
+  },
+  // G
+  {
+    question: 'Dans GTA 5, combien de personnages jouables ?',
+    type: 'multiple_choice',
+    choices: ['3', '2', '4', '1'],
+    correct_answer: '3',
+    humor_level: 'mild',
+  },
+  // R
+  {
+    question: 'Quel YouTubeur a le plus d\'abonnés en 2024 ?',
+    type: 'multiple_choice',
+    choices: ['MrBeast', 'PewDiePie', 'T-Series', 'Cocomelon'],
+    correct_answer: 'MrBeast',
+    humor_level: 'mild',
+  },
+  // C
+  {
+    question: 'Quel rappeur s\'appelle Aubrey Drake Graham ?',
+    type: 'multiple_choice',
+    choices: ['Drake', 'Lil Wayne', 'Future', 'Travis Scott'],
+    correct_answer: 'Drake',
+    humor_level: 'mild',
+  },
+  // D
+  {
+    question: 'Combien de vies a un chat selon la légende ?',
+    type: 'multiple_choice',
+    choices: ['9', '7', '3', '13'],
+    correct_answer: '9',
+    humor_level: 'absurd',
+  },
+
+  // P
+  {
+    question: 'De quel type est Dracolosse ?',
+    type: 'multiple_choice',
+    choices: ['Dragon / Vol', 'Feu / Dragon', 'Dragon / Normal', 'Sol / Dragon'],
+    correct_answer: 'Dragon / Vol',
+    humor_level: 'mild',
+  },
+  // G
+  {
+    question: 'Quel jeu utilise des "V-Bucks" comme monnaie ?',
+    type: 'multiple_choice',
+    choices: ['Fortnite', 'Roblox', 'Minecraft', 'GTA Online'],
+    correct_answer: 'Fortnite',
+    humor_level: 'mild',
+  },
+  // R
+  {
+    question: 'Combien de caractères max dans un post X (Twitter) ?',
+    type: 'multiple_choice',
+    choices: ['280', '140', '500', '240'],
+    correct_answer: '280',
+    humor_level: 'mild',
+  },
+  // C
+  {
+    question: 'Dans quelle série trouve-t-on le personnage "Eleven" ?',
+    type: 'multiple_choice',
+    choices: ['Stranger Things', 'Dark', 'The OA', 'Black Mirror'],
+    correct_answer: 'Stranger Things',
+    humor_level: 'mild',
+  },
+  // D
+  {
+    question: 'Quelle couleur est le ciel par beau temps ?',
+    type: 'multiple_choice',
+    choices: ['Bleu', 'Gris (en France)', 'Noir la nuit', 'Ça dépend du filtre'],
+    correct_answer: 'Bleu',
+    humor_level: 'absurd',
+  },
+
+  // P
+  {
+    question: "Quelle est l'attaque signature de Pikachu ?",
+    type: 'multiple_choice',
+    choices: ['Fatal-Foudre', 'Tonnerre', 'Éclair', 'Électacle'],
+    correct_answer: 'Fatal-Foudre',
+    humor_level: 'mild',
+  },
+  // G
+  {
+    question: 'Sur quelle console est sorti Zelda BOTW à l\'origine ?',
+    type: 'multiple_choice',
+    choices: ['Wii U', 'Switch', '3DS', 'Wii'],
+    correct_answer: 'Wii U',
+    humor_level: 'mild',
+  },
+  // R
+  {
+    question: 'Quel réseau social a inventé les "Stories" ?',
+    type: 'multiple_choice',
+    choices: ['Snapchat', 'Instagram', 'TikTok', 'Facebook'],
+    correct_answer: 'Snapchat',
+    humor_level: 'mild',
+  },
+  // C
+  {
+    question: 'Quel film Pixar raconte l\'histoire de jouets vivants ?',
+    type: 'multiple_choice',
+    choices: ['Toy Story', 'Cars', 'Up', 'Ratatouille'],
+    correct_answer: 'Toy Story',
+    humor_level: 'mild',
+  },
+  // D
+  {
+    question: 'Quel champion Space Invaders connais-tu ?',
+    type: 'multiple_choice',
+    choices: ['Toi !', 'Ton pote', 'Personne', "L'IA qui joue seule"],
+    correct_answer: 'Toi !',
+    humor_level: 'absurd',
+  },
+
+  // P
+  {
+    question: 'Quelle ville abrite la 1ère arène de Kanto ?',
+    type: 'multiple_choice',
+    choices: ['Argenta', 'Jadielle', 'Joëlville', 'Lavanville'],
+    correct_answer: 'Jadielle',
+    humor_level: 'mild',
+  },
+  // G
+  {
+    question: 'Quelle entreprise fabrique la PlayStation ?',
+    type: 'multiple_choice',
+    choices: ['Sony', 'Microsoft', 'Nintendo', 'Sega'],
+    correct_answer: 'Sony',
+    humor_level: 'mild',
+  },
+  // R
+  {
+    question: "Qu'est-ce qu'un \"ratio\" sur X/Twitter ?",
+    type: 'multiple_choice',
+    choices: ["Plus de RT que de likes", "Bloquer quelqu'un", 'Un tag massif', 'Un mème viral'],
+    correct_answer: 'Plus de RT que de likes',
+    humor_level: 'mild',
+  },
+  // C
+  {
+    question: 'Dans quel club joue Mbappé depuis 2024 ?',
+    type: 'multiple_choice',
+    choices: ['Real Madrid', 'PSG', 'Liverpool', 'Bayern Munich'],
+    correct_answer: 'Real Madrid',
+    humor_level: 'mild',
+  },
+
+  // P
+  {
+    question: "Combien d'évolutions a Évoli ?",
+    type: 'multiple_choice',
+    choices: ['8', '7', '6', '9'],
+    correct_answer: '8',
+    humor_level: 'mild',
+  },
+  // G
+  {
+    question: 'Quel personnage dit "It\'s-a me, Mario !" ?',
+    type: 'multiple_choice',
+    choices: ['Mario', 'Luigi', 'Toad', 'Waluigi'],
+    correct_answer: 'Mario',
+    humor_level: 'absurd',
+  },
+  // C
+  {
+    question: 'Quelle série Netflix parle de drogues à Albuquerque ?',
+    type: 'multiple_choice',
+    choices: ['Breaking Bad', 'Narcos', 'Ozark', 'Better Call Saul'],
+    correct_answer: 'Breaking Bad',
+    humor_level: 'mild',
+  },
+
+  // P
+  {
+    question: 'Quel Pokémon légendaire peut tout créer ?',
+    type: 'multiple_choice',
+    choices: ['Arceus', 'Mew', 'Mewtwo', 'Dialga'],
+    correct_answer: 'Arceus',
+    humor_level: 'mild',
+  },
+  // G
+  {
+    question: 'Quel jeu se passe dans un open world nommé Hyrule ?',
+    type: 'multiple_choice',
+    choices: ['The Legend of Zelda', 'Skyrim', 'Elden Ring', 'Dark Souls'],
+    correct_answer: 'The Legend of Zelda',
+    humor_level: 'mild',
+  },
+
+  // P
+  {
+    question: 'Dans quel jeu Pokémon GO est sorti ?',
+    type: 'multiple_choice',
+    choices: ['Sur mobile', 'Switch', '3DS', 'PC'],
+    correct_answer: 'Sur mobile',
+    humor_level: 'mild',
+  },
+  // G
+  {
+    question: 'Combien de joueurs max en mode standard sur Fortnite ?',
+    type: 'multiple_choice',
+    choices: ['100', '50', '64', '150'],
+    correct_answer: '100',
+    humor_level: 'mild',
+  },
+
+  // P
+  {
+    question: 'Quel Pokémon évolue avec une Pierre Eau ?',
+    type: 'multiple_choice',
+    choices: ['Staross', 'Magicarpe', 'Tentacruel', 'Aquali'],
+    correct_answer: 'Staross',
+    humor_level: 'mild',
+  },
+  // G
+  {
+    question: 'Quel FPS se déroule dans l\'espace avec des Spartiates ?',
+    type: 'multiple_choice',
+    choices: ['Halo', 'Destiny', 'Mass Effect', 'Titanfall'],
+    correct_answer: 'Halo',
     humor_level: 'mild',
   },
 ];

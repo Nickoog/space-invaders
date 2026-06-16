@@ -3,7 +3,6 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 import type { QuestionData, GameState } from '../types.js';
 import { FALLBACK_QUESTIONS } from './fallbackQuestions.js';
-import { getPlayerInterests, getPlayerAge } from './onboarding.js';
 import { QUESTION_POOL_TARGET, QUESTION_TIMEOUT_MS } from '../constants.js';
 
 // ── Zod schema (source of truth for the AI response shape) ───────────────────
@@ -16,53 +15,14 @@ const QuestionSchema = z.object({
   humor_level: z.enum(['mild', 'absurd']),
 });
 
-// ── Age profile helper ───────────────────────────────────────────────────────
+// ── System prompt (fixed — no dynamic personalization) ───────────────────────
 
-function ageProfile(age: number): string {
-  if (age < 10)  return `${age} ans. Dessin animé/Pokémon. Très simple.`;
-  if (age < 14)  return `${age} ans. Jeux vidéo/youtubeurs. Accessible.`;
-  if (age < 18)  return `${age} ans. Ado. Mèmes/gaming. Piquant OK.`;
-  if (age < 30)  return `${age} ans. Pop culture actuelle. Cynique OK.`;
-  if (age < 50)  return `${age} ans. Nostalgie 80-90. Culture générale.`;
-  return          `${age} ans. Classiques cinéma/sport. Soutenu.`;
-}
-
-// ── System prompt ────────────────────────────────────────────────────────────
-
-const SYSTEM_PROMPT = `Quiz master. Langue : français.
-Question liée aux intérêts du joueur, adaptée à son âge.
-4 options : 1 correcte, 3 plausibles ou drôles.
-mild = jeu de mots / référence culturelle.
-absurd = scénario surréaliste / chute inattendue.
-Question ≤ 12 mots. Chaque option ≤ 4 mots. Style télégraphique.`;
- 
-// ── Game context builder ─────────────────────────────────────────────────────
-
-const FLAVOR_CONTEXTS = [
-  'a raté un Pokémon légendaire de justesse',
-  'essaie d\'attraper Pikachu depuis trop longtemps',
-  'a réussi un tir impossible mais personne n\'a vu',
-  'est encerclé par des Magicarpes en colère',
-  'vient de se faire surprendre par une Ronflex',
-  'pense pouvoir battre le record mais en doute',
-  'a raté le dernier ennemi de la vague',
-  'est convaincu que les Pokéballs sont buguées',
-] as const;
-
-// Returns a situation string derived from actual game state when available.
-function buildGameContext(game: GameState): string {
-  const { score, lives, level } = game;
-
-  if (lives === 1 && score === 0)  return 'commence la partie et est déjà en danger';
-  if (lives === 1)                 return `est à sa dernière vie (${score} pts) et sue à grosses gouttes`;
-  if (level >= 3 && lives === 3)   return `domine la vague ${level} sans une égratignure`;
-  if (level >= 3)                  return `survit péniblement à la vague ${level}`;
-  if (score === 0)                 return 'vient de commencer et n\'a encore rien attrapé';
-  if (score > 3000)                return `accumule ${score} points et commence à se croire invincible`;
-  if (score > 1000)                return `progresse bien avec ${score} points`;
-
-  return FLAVOR_CONTEXTS[Math.floor(Math.random() * FLAVOR_CONTEXTS.length)]!;
-}
+const SYSTEM_PROMPT = `Tu es un quiz master pour un jeu Pokémon Invaders.
+Génère une question de culture générale fun pour un ado de 17 ans.
+Thèmes à varier : Pokémon, jeux vidéo, TikTok/YouTube/réseaux sociaux, films/séries, sport, culture pop.
+Format : 1 question (≤60 caractères), 4 réponses courtes (≤25 caractères chacune), 1 correcte, 3 plausibles.
+Style : mélange questions factuelles sérieuses et questions drôles/absurdes.
+Langue : français uniquement.`;
 
 // ── Post-processing ──────────────────────────────────────────────────────────
 
@@ -121,50 +81,31 @@ export function getRandomFallback(): QuestionData {
   return FALLBACK_QUESTIONS[idx]!;
 }
 
-export async function generateQuestion(
-  interests: string[],
-  _lastType: 'multiple_choice' | null,
-  age?: number | null,
-  context?: string,
-): Promise<QuestionData> {
+async function generateQuestion(): Promise<QuestionData> {
   const provider = getProvider();
   if (!provider) {
     console.debug('[AI] pas de provider — fallback');
     return getRandomFallback();
   }
- 
-  const resolvedAge = age ?? getPlayerAge();
- 
-  const humorLevel = Math.random() < 0.4 ? 'absurd' : 'mild';
-  const resolvedContext = context ?? 'joue à Space Invaders';
 
-  const prompt = [
-    `Intérêts : ${interests.join(', ')}`,
-    resolvedAge !== null ? `Âge : ${resolvedAge} ans (${ageProfile(resolvedAge)})` : '',
-    `Situation : le joueur ${resolvedContext}`,
-    `Humour : ${humorLevel}`,
-  ]
-    .filter(Boolean)
-    .join('\n');
- 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), QUESTION_TIMEOUT_MS);
- 
+
   try {
     const result = await generateText({
       model: provider('claude-haiku-4-5-20251001'),
       output: Output.object({ schema: QuestionSchema }),
       system: SYSTEM_PROMPT,
-      prompt,
+      prompt: 'Génère une question.',
       maxOutputTokens: 300,
-      temperature: 0.9,
+      temperature: 0.7,
       abortSignal: controller.signal,
       providerOptions: {
         anthropic: { structuredOutputMode: 'jsonTool' },
       },
     });
     clearTimeout(timeout);
- 
+
     const { inputTokens, outputTokens } = result.usage;
     console.debug(`[AI] question générée — in:${inputTokens} out:${outputTokens} tokens`);
 
@@ -181,15 +122,9 @@ export async function replenishPool(game: GameState): Promise<void> {
   const needed = QUESTION_POOL_TARGET - game.questionPool.length;
   if (needed <= 0) return;
 
-  // Read interests and age from the active profile — falls back to legacy keys if absent
-  const interests = game.activeProfile?.interests ?? getPlayerInterests() ?? [];
-  if (interests.length === 0) return;
-
-  const age = game.activeProfile?.age ?? getPlayerAge();
-
   for (let i = 0; i < needed; i++) {
     try {
-      const question = await generateQuestion(interests, game.lastQuestionType, age, buildGameContext(game));
+      const question = await generateQuestion();
       game.questionPool.push(question);
     } catch {
       // Pool stays smaller — fallback will be used at question time
