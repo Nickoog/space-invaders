@@ -67,6 +67,7 @@ export interface QuestionData {
   choices: string[];
   correct_answer: string;
   humor_level: 'mild' | 'absurd';
+  source?: 'ai' | 'fallback';
 }
 
 export interface GameState {
@@ -100,6 +101,11 @@ export interface GameState {
   interludeMessage: string;
   interludeImage: HTMLImageElement | null;
   // Ammo / quiz mechanic
-  ammo: number;      // current pokéballs available to fire
-  ammoQuota: number; // pokéballs needed to start this level (pre-level quiz target)
+  ammo: number;          // current pokéballs available to fire
+  ammoQuota: number;     // pokéballs needed to start this level (pre-level quiz target)
+  quizInProgress: boolean; // true once player has clicked "start quiz" — prevents re-trigger
+  // Question variety
+  questionHistory: string[]; // textes des 25 dernières questions posées (FIFO anti-doublon)
+  topicIndex: number;        // pointeur de rotation des thèmes geek
+  pokemonTypePool: QuestionData[]; // questions Pokémon type-centré (balle ennemie)
 }

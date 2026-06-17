@@ -32,5 +32,9 @@ export function createGame(spriteMap: Map<number, HTMLImageElement | null>): Gam
     interludeImage:            null,
     ammo:                      0,
     ammoQuota:                 0,
+    quizInProgress:            false,
+    questionHistory:           [],
+    topicIndex:                0,
+    pokemonTypePool:           [],
   };
 }

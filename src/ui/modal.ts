@@ -7,6 +7,7 @@ export interface QuestionModalOptions {
   subtitle?: string;
   resultCorrect?: string;
   resultWrong?: string;
+  progress?: { current: number; max: number };
 }
 import { ONBOARDING_QUESTIONS } from '../ai/onboarding.js';
 
@@ -29,7 +30,27 @@ function injectStyles(): void {
       background: #0a0a0a; border: 3px solid #00ff44;
       padding: 32px; max-width: 580px; width: 90%;
       box-shadow: 0 0 40px rgba(0,255,68,0.25);
-      color: #fff; box-sizing: border-box;
+      color: #fff; box-sizing: border-box; position: relative;
+    }
+    .ai-source-badge {
+      position: absolute; top: 8px; right: 8px;
+      font-size: 10px; padding: 2px 7px; border-radius: 3px;
+      font-family: monospace; font-weight: bold; letter-spacing: 1px;
+    }
+    .ai-source-badge.ai       { background: #001a00; color: #00ff44; border: 1px solid #00ff44; }
+    .ai-source-badge.fallback { background: #1a0f00; color: #ffaa00; border: 1px solid #ffaa00; }
+    .ai-ammo-wrap { margin-bottom: 14px; }
+    .ai-ammo-label {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: #aaa; margin-bottom: 5px;
+    }
+    .ai-ammo-label span:last-child { color: #00ff44; font-weight: bold; }
+    .ai-ammo-bg {
+      height: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 2px; overflow: hidden;
+    }
+    .ai-ammo-fill {
+      height: 100%; background: #00ff44; border-radius: 2px;
+      transition: width 0.3s ease;
     }
     .ai-title {
       color: #ff4444; font-size: 20px; font-weight: bold;
@@ -221,6 +242,7 @@ export function showQuestionModal(
     subtitle     = 'Bonne réponse = vie sauvée · Mauvaise = vie perdue',
     resultCorrect = '✅ BONNE RÉPONSE ! Ennemis ralentis.',
     resultWrong   = '❌ MAUVAISE RÉPONSE ! Ennemis accélérés.',
+    progress,
   } = options;
 
   injectStyles();
@@ -254,10 +276,27 @@ export function showQuestionModal(
     `<button class="ai-choice" data-idx="${i}">${String.fromCharCode(65 + i)}. ${c}</button>`
   ).join('');
 
+  const sourceCls   = question.source === 'ai' ? 'ai' : 'fallback';
+  const sourceLabel = question.source === 'ai' ? '🤖 IA' : '📚 BANQUE';
+
+  const progressHtml = progress
+    ? `<div class="ai-ammo-wrap">
+        <div class="ai-ammo-label">
+          <span>POKÉBALLS</span>
+          <span>${progress.current} / ${progress.max}</span>
+        </div>
+        <div class="ai-ammo-bg">
+          <div class="ai-ammo-fill" style="width:${Math.min(100, (progress.current / progress.max) * 100).toFixed(1)}%"></div>
+        </div>
+      </div>`
+    : '';
+
   overlay.innerHTML = `
     <div class="ai-box">
+      <span class="ai-source-badge ${sourceCls}">${sourceLabel}</span>
       <div class="ai-title">${title}</div>
       <div class="ai-subtitle">${subtitle}</div>
+      ${progressHtml}
       <div class="ai-timer-bar" id="q-timer-bar"></div>
       <div class="ai-question">${question.question}</div>
       <div id="q-answers">${answersHtml}</div>

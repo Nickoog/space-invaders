@@ -240,67 +240,112 @@ export function renderPreLevelQuizScreen(
   quota: number,
   level: number,
   levelType: string,
+  quizInProgress = false,
 ): void {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
 
   ctx.textAlign = 'center';
 
-  // Title
-  if (level === 1) {
-    ctx.fillStyle = '#ffff44';
-    ctx.font = '14px "Press Start 2P", monospace';
-    ctx.fillText('BIENVENUE, FLAVIEN !', W / 2, 52);
+  const typeColor = TYPE_COLORS[levelType] ?? '#00ff44';
+  const typeLabel = TYPE_LABELS[levelType] ?? levelType;
+
+  if (!quizInProgress) {
+    // ── Phase 1 : écran d'intro, joueur doit appuyer sur Entrée ──────────────
+
+    if (level === 1) {
+      ctx.fillStyle = '#ffff44';
+      ctx.font = '13px "Press Start 2P", monospace';
+      ctx.fillText('BIENVENUE, FLAVIEN !', W / 2, 46);
+    }
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '18px "Press Start 2P", monospace';
+    ctx.fillText(`NIVEAU ${level}`, W / 2, level === 1 ? 76 : 56);
+
+    ctx.fillStyle = typeColor;
+    ctx.font = '11px "Press Start 2P", monospace';
+    ctx.fillText(`Pokémon à attraper : ${typeLabel.toUpperCase()}`, W / 2, level === 1 ? 102 : 82);
+
+    // Séparateur
+    const sepY = level === 1 ? 122 : 102;
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(80, sepY);
+    ctx.lineTo(W - 80, sepY);
+    ctx.stroke();
+
+    // Règles — chaque ligne peut avoir sa propre taille
+    const lineH = 26;
+    interface RuleItem { color: string; text: string; font?: string; extraBefore?: number; }
+    const rules: RuleItem[] = [
+      { color: '#aaaaaa', text: '← → pour bouger   |   ESPACE pour tirer' },
+      { color: typeColor, text: `Attrape les Pokémon ${typeLabel} !`,
+        font: '14px "Press Start 2P", monospace', extraBefore: 10 },
+      { color: '#ff9944',
+        text: 'Attraper le mauvais type déchaîne la colère des Légendaires !',
+        extraBefore: 6 },
+      { color: '#888888', text: 'Si une balle ennemie te touche → question (vie en jeu !)' },
+      { color: '#888888', text: 'Plus de pokéballs ? Appuie sur ESPACE pour en regagner' },
+      { color: '#ffff44', text: `Tu gagnes ${AMMO_PER_CORRECT_QUIZ} pokéballs par bonne réponse` },
+    ];
+
+    let ruleY = sepY + 30;
+    for (const rule of rules) {
+      ruleY += rule.extraBefore ?? 0;
+      ctx.font = rule.font ?? '9px "Press Start 2P", monospace';
+      ctx.fillStyle = rule.color;
+      ctx.fillText(rule.text, W / 2, ruleY);
+      ruleY += rule.font ? 34 : lineH;
+    }
+
+    // Objectif du quiz
+    const goalY = ruleY + 10;
+    ctx.fillStyle = '#555555';
+    ctx.font = '9px "Press Start 2P", monospace';
+    ctx.fillText(`Objectif : gagner ${quota} pokéballs avant de jouer`, W / 2, goalY);
+
+    // Bouton Start — clignotant
+    if (Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '12px "Press Start 2P", monospace';
+      ctx.fillText('[ ENTRÉE ]  COMMENCER LE QUIZ', W / 2, goalY + 44);
+    }
+
+  } else {
+    // ── Phase 2 : quiz en cours, modal DOM au premier plan ───────────────────
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '16px "Press Start 2P", monospace';
+    ctx.fillText(`NIVEAU ${level} — QUIZ`, W / 2, 80);
+
+    ctx.fillStyle = typeColor;
+    ctx.font = '10px "Press Start 2P", monospace';
+    ctx.fillText(`Pokémon ${typeLabel}`, W / 2, 110);
+
+    // Barre de progression
+    const progY = 180;
+    ctx.fillStyle = '#aaaaaa';
+    ctx.font = '10px "Press Start 2P", monospace';
+    ctx.fillText('POKÉBALLS GAGNÉES', W / 2, progY);
+
+    const bw = 500, bh = 28, bx = W / 2 - bw / 2, by = progY + 18;
+    ctx.strokeStyle = '#00ff44';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx, by, bw, bh);
+    const fill = quota > 0 ? (bw - 4) * Math.min(1, ammo / quota) : 0;
+    ctx.fillStyle = '#00ff44';
+    ctx.fillRect(bx + 2, by + 2, fill, bh - 4);
+
+    ctx.fillStyle = '#00ff44';
+    ctx.font = '16px "Press Start 2P", monospace';
+    ctx.fillText(`${ammo} / ${quota}`, W / 2, by + bh + 30);
+
+    ctx.fillStyle = '#555555';
+    ctx.font = '9px "Press Start 2P", monospace';
+    ctx.fillText(`Bonne réponse → +${AMMO_PER_CORRECT_QUIZ} pokéballs   |   Mauvaise → +0`, W / 2, by + bh + 52);
   }
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '16px "Press Start 2P", monospace';
-  ctx.fillText(`NIVEAU ${level}`, W / 2, level === 1 ? 82 : 60);
-
-  ctx.fillStyle = TYPE_COLORS[levelType] ?? '#00ff44';
-  ctx.font = '11px "Press Start 2P", monospace';
-  ctx.fillText(`GAGNE TES POKÉBALLS POUR JOUER !`, W / 2, level === 1 ? 108 : 84);
-
-  // Rules section
-  const rulesY = level === 1 ? 148 : 124;
-  const lineH = 26;
-  ctx.fillStyle = '#aaaaaa';
-  ctx.font = '9px "Press Start 2P", monospace';
-  const rules = [
-    '← → pour bouger   |   ESPACE pour tirer',
-    `Attrape les Pokémon ${TYPE_LABELS[levelType] ?? levelType} !`,
-    'Pokémon en rouge = mauvais type, évite-les !',
-    'Chaque capture déclenche une question',
-    'Balle ennemie = question (bonne réponse = vie sauvée)',
-    'Plus de Pokéballs ? ESPACE pour recharger',
-  ];
-  rules.forEach((line, i) => {
-    ctx.fillStyle = i === 0 ? '#ffffff' : i === 1 ? (TYPE_COLORS[levelType] ?? '#00ff44') : '#888888';
-    ctx.fillText(line, W / 2, rulesY + i * lineH);
-  });
-
-  // Ammo progress
-  const progY = rulesY + rules.length * lineH + 24;
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '11px "Press Start 2P", monospace';
-  ctx.fillText('POKÉBALLS GAGNÉES', W / 2, progY);
-
-  // Progress bar
-  const bw = 500, bh = 22, bx = W / 2 - bw / 2, by = progY + 16;
-  ctx.strokeStyle = '#00ff44';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(bx, by, bw, bh);
-  const fill = quota > 0 ? (bw - 4) * Math.min(1, ammo / quota) : 0;
-  ctx.fillStyle = '#00ff44';
-  ctx.fillRect(bx + 2, by + 2, fill, bh - 4);
-
-  ctx.fillStyle = '#00ff44';
-  ctx.font = '13px "Press Start 2P", monospace';
-  ctx.fillText(`${ammo} / ${quota}`, W / 2, by + bh + 22);
-
-  ctx.fillStyle = '#555555';
-  ctx.font = '9px "Press Start 2P", monospace';
-  ctx.fillText(`Bonne réponse → +${AMMO_PER_CORRECT_QUIZ} pokéballs   |   Mauvaise → +0`, W / 2, by + bh + 42);
 
   ctx.textAlign = 'left';
 }

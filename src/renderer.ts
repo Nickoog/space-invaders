@@ -92,14 +92,6 @@ export function drawPokemon(
     ctx.fill();
   }
 
-  // Red tint overlay for wrong-type enemies
-  if (!enemy.correctType) {
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle   = '#ff2020';
-    ctx.fillRect(x, y, ENEMY_W, ENEMY_H);
-    ctx.globalAlpha = 1;
-  }
-
   // White flash overlay while being caught
   if (enemy.caughtFlash > 0) {
     ctx.globalAlpha = (enemy.caughtFlash / CAUGHT_FLASH_MS) * 0.8;
