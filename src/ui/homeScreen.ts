@@ -6,7 +6,8 @@ import {
 } from '../profiles.js';
 import { showOnboarding } from './modal.js';
 import { startGame } from '../gameLoop.js';
-import { DIFFICULTY_DELTA_MS } from '../constants.js';
+import { DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS, AMMO_FULL_BAG } from '../constants.js';
+import { updateProfile } from '../profiles.js';
 
 // ── Overlay singleton ─────────────────────────────────────────────────────────
 
@@ -124,6 +125,36 @@ function injectStyles(): void {
     .home-input:focus { border-color: #ffff44; }
     .home-hint  { font-size: 12px; color: #444; margin-bottom: 4px; }
     .home-error { font-size: 13px; color: #ff4444; min-height: 20px; margin-bottom: 10px; }
+    /* Skip-questions toggle */
+    .home-skip-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 20px; padding: 12px 0; border-top: 1px solid #1a1a1a;
+    }
+    .home-skip-label { color: #555; font-size: 13px; }
+    .home-skip-btn {
+      padding: 7px 16px; border: 2px solid #333; background: #000;
+      font-family: monospace; font-size: 12px; cursor: pointer;
+      color: #555; transition: all 0.12s;
+    }
+    .home-skip-btn.on  { border-color: #ffff44; color: #ffff44; }
+    .home-skip-btn:hover { background: #111; }
+    /* Settings page */
+    .home-settings-section { margin-bottom: 28px; }
+    .home-settings-lbl {
+      color: #555; font-size: 11px; letter-spacing: 2px;
+      margin-bottom: 12px; display: block;
+    }
+    .home-settings-ctrl { display: flex; align-items: center; gap: 16px; }
+    .home-settings-val  { flex: 1; text-align: center; }
+    .home-settings-name { color: #fff; font-size: 16px; font-weight: bold; }
+    .home-settings-sub  { color: #555; font-size: 11px; margin-top: 5px; }
+    .home-stepper {
+      padding: 8px 14px; border: 2px solid #333; background: #000;
+      color: #aaa; font-family: monospace; font-size: 18px; cursor: pointer;
+      transition: border-color 0.12s, color 0.12s;
+    }
+    .home-stepper:hover:not(:disabled) { border-color: #00ff44; color: #00ff44; }
+    .home-stepper:disabled { opacity: 0.2; cursor: default; }
   `;
   document.head.appendChild(style);
 }
@@ -230,6 +261,9 @@ function renderConfirm(game: GameState, profile: PlayerProfile): void {
   const diff    = diffLabel(profile.difficultyOffset);
   const interests = profile.interests.length > 0 ? profile.interests.join(', ') : '—';
 
+  const skipCls   = game.skipLevels ? 'on' : '';
+  const skipLabel = game.skipLevels ? '✅ ACTIVÉ' : '☐ DÉSACTIVÉ';
+
   overlay.innerHTML = `
     <div class="home-box">
       <div class="home-confirm-pseudo">${esc(profile.pseudo)}</div>
@@ -249,12 +283,31 @@ function renderConfirm(game: GameState, profile: PlayerProfile): void {
         <span class="home-stat-label">Intérêts</span>
         <span class="home-stat-val">${esc(interests)}</span>
       </div>
+      <div class="home-skip-row">
+        <span class="home-skip-label">Passer les niveaux (touche N)</span>
+        <button class="home-skip-btn ${skipCls}" id="home-skip">${skipLabel}</button>
+      </div>
+      <div style="text-align:right; margin-top:10px;">
+        <button class="home-btn sec" id="home-settings"
+                style="flex:none; padding:8px 18px; font-size:13px;">
+          ⚙ Paramètres
+        </button>
+      </div>
       <div class="home-actions">
         <button class="home-btn sec" id="home-back">← Retour</button>
         <button class="home-btn" id="home-play">JOUER →</button>
       </div>
     </div>
   `;
+
+  overlay.querySelector('#home-skip')?.addEventListener('click', () => {
+    game.skipLevels = !game.skipLevels;
+    renderConfirm(game, profile);
+  });
+
+  overlay.querySelector('#home-settings')?.addEventListener('click', () => {
+    renderSettings(game, profile);
+  });
 
   overlay.querySelector('#home-back')?.addEventListener('click', () => {
     renderSelection(game);
@@ -265,6 +318,89 @@ function renderConfirm(game: GameState, profile: PlayerProfile): void {
     removeHomeOverlay();
     startGame(game);
   });
+}
+
+// ── View : settings ──────────────────────────────────────────────────────────
+
+function renderSettings(game: GameState, profile: PlayerProfile): void {
+  const overlay = getOverlay();
+
+  let steps     = Math.round(profile.difficultyOffset / DIFFICULTY_DELTA_MS);
+  let nQuestions = profile.preQuizCorrect;
+
+  function diffText(s: number): string {
+    const r = diffLabel(s * DIFFICULTY_DELTA_MS);
+    return r.text;
+  }
+
+  function render(): void {
+    overlay.innerHTML = `
+      <div class="home-box">
+        <div class="home-title2" style="font-size:20px;margin-bottom:24px;">⚙ PARAMÈTRES</div>
+
+        <div class="home-settings-section">
+          <span class="home-settings-lbl">DIFFICULTÉ DE DÉPART</span>
+          <div class="home-settings-ctrl">
+            <button class="home-stepper" id="diff-dec"
+                    ${steps <= -DIFFICULTY_MAX_STEPS ? 'disabled' : ''}>◄</button>
+            <div class="home-settings-val">
+              <div class="home-settings-name">${diffText(steps)}</div>
+              <div class="home-settings-sub">cran ${steps > 0 ? '+' : ''}${steps} / +4 max</div>
+            </div>
+            <button class="home-stepper" id="diff-inc"
+                    ${steps >= DIFFICULTY_MAX_STEPS ? 'disabled' : ''}>►</button>
+          </div>
+        </div>
+
+        <div class="home-settings-section">
+          <span class="home-settings-lbl">QUESTIONS AVANT LE NIVEAU</span>
+          <div class="home-settings-ctrl">
+            <button class="home-stepper" id="quiz-dec"
+                    ${nQuestions <= 1 ? 'disabled' : ''}>◄</button>
+            <div class="home-settings-val">
+              <div class="home-settings-name">${nQuestions} bonne${nQuestions > 1 ? 's' : ''} réponse${nQuestions > 1 ? 's' : ''}</div>
+              <div class="home-settings-sub">+${Math.ceil(AMMO_FULL_BAG / nQuestions)} pokéball${Math.ceil(AMMO_FULL_BAG / nQuestions) > 1 ? 's' : ''} par réponse</div>
+            </div>
+            <button class="home-stepper" id="quiz-inc"
+                    ${nQuestions >= 10 ? 'disabled' : ''}>►</button>
+          </div>
+        </div>
+
+        <div class="home-actions">
+          <button class="home-btn sec" id="settings-cancel">← Annuler</button>
+          <button class="home-btn" id="settings-save">✅ SAUVEGARDER</button>
+        </div>
+      </div>
+    `;
+
+    overlay.querySelector('#diff-dec')?.addEventListener('click', () => {
+      steps--;
+      render();
+    });
+    overlay.querySelector('#diff-inc')?.addEventListener('click', () => {
+      steps++;
+      render();
+    });
+    overlay.querySelector('#quiz-dec')?.addEventListener('click', () => {
+      nQuestions--;
+      render();
+    });
+    overlay.querySelector('#quiz-inc')?.addEventListener('click', () => {
+      nQuestions++;
+      render();
+    });
+    overlay.querySelector('#settings-cancel')?.addEventListener('click', () => {
+      renderConfirm(game, profile);
+    });
+    overlay.querySelector('#settings-save')?.addEventListener('click', () => {
+      profile.difficultyOffset = steps * DIFFICULTY_DELTA_MS;
+      profile.preQuizCorrect   = nQuestions;
+      updateProfile(profile);
+      renderConfirm(game, profile);
+    });
+  }
+
+  render();
 }
 
 // ── View : new player form ────────────────────────────────────────────────────

@@ -8,6 +8,7 @@ export interface PlayerProfile {
   interests: string[];
   age: number | null;
   difficultyOffset: number;
+  preQuizCorrect: number;  // bonnes réponses requises avant le niveau (défaut 5)
   createdAt: number;
 }
 
@@ -92,18 +93,14 @@ export interface GameState {
   // Profile feature
   activeProfile: PlayerProfile | null;
   onHome: (() => void) | null;
-  // Hard mode (New Game+)
-  hardMode: boolean;
-  questionsInRound: number;          // total questions to answer per hit (1 normal, 2 hard)
-  questionsAnsweredInRound: number;  // questions answered correctly so far this hit
   // Victory / Interlude
   victoryDelay: number;
-  interludeMessage: string;
   interludeImage: HTMLImageElement | null;
   // Ammo / quiz mechanic
   ammo: number;          // current pokéballs available to fire
   ammoQuota: number;     // pokéballs needed to start this level (pre-level quiz target)
   quizInProgress: boolean; // true once player has clicked "start quiz" — prevents re-trigger
+  skipLevels: boolean;     // si true, la touche N passe au niveau suivant pendant le jeu
   // Question variety
   questionHistory: string[]; // textes des 25 dernières questions posées (FIFO anti-doublon)
   topicIndex: number;        // pointeur de rotation des thèmes geek

@@ -1,4 +1,4 @@
-import { W, H, MENU_BLINK_MS, GAMEOVER_DELAY_MS, ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO, WRONG_TYPE_RATIO, MAX_LEVELS, VICTORY_DELAY_MS, AMMO_PER_CORRECT_QUIZ } from './constants.js';
+import { W, H, MENU_BLINK_MS, GAMEOVER_DELAY_MS, ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO, WRONG_TYPE_RATIO, MAX_LEVELS, VICTORY_DELAY_MS } from './constants.js';
 import { TYPE_LABELS, TYPE_COLORS } from './api/pokeapi.js';
 
 export function renderLoadingScreen(ctx: CanvasRenderingContext2D, loaded: number, total: number): void {
@@ -206,23 +206,20 @@ export function renderVictoryScreen(ctx: CanvasRenderingContext2D, score: number
 }
 
 // ── Interlude screen (personal message + optional photo) ──────────────────────
-export function renderInterludeScreen(ctx: CanvasRenderingContext2D, message: string, image: HTMLImageElement | null): void {
+export function renderInterludeScreen(ctx: CanvasRenderingContext2D, image: HTMLImageElement | null): void {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
 
   ctx.textAlign = 'center';
 
   if (image && image.complete && image.naturalWidth > 0) {
-    const maxW = W * 0.72, maxH = H * 0.52;
+    const maxW = W;
+    const maxH = H - 40;
     const scale = Math.min(maxW / image.naturalWidth, maxH / image.naturalHeight);
     const iw = image.naturalWidth * scale;
     const ih = image.naturalHeight * scale;
-    ctx.drawImage(image, W / 2 - iw / 2, 40, iw, ih);
+    ctx.drawImage(image, W / 2 - iw / 2, (maxH - ih) / 2, iw, ih);
   }
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '12px "Press Start 2P", monospace';
-  wrapText(ctx, message, W / 2, H * 0.74, W - 80, 28);
 
   if (Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {
     ctx.fillStyle = '#00ff44';
@@ -251,66 +248,90 @@ export function renderPreLevelQuizScreen(
   const typeLabel = TYPE_LABELS[levelType] ?? levelType;
 
   if (!quizInProgress) {
-    // ── Phase 1 : écran d'intro, joueur doit appuyer sur Entrée ──────────────
+    // ── Phase 1 : écran d'intro ───────────────────────────────────────────────
+
+    let y = level === 1 ? 30 : 50;
 
     if (level === 1) {
       ctx.fillStyle = '#ffff44';
       ctx.font = '13px "Press Start 2P", monospace';
-      ctx.fillText('BIENVENUE, FLAVIEN !', W / 2, 46);
+      ctx.fillText('BIENVENUE, FLAVIEN !', W / 2, y);
+      y += 36;
     }
 
+    // Titre niveau
     ctx.fillStyle = '#ffffff';
-    ctx.font = '18px "Press Start 2P", monospace';
-    ctx.fillText(`NIVEAU ${level}`, W / 2, level === 1 ? 76 : 56);
+    ctx.font = '28px "Press Start 2P", monospace';
+    ctx.fillText(`NIVEAU ${level}`, W / 2, y);
+    y += 42;
 
+    // Type
     ctx.fillStyle = typeColor;
-    ctx.font = '11px "Press Start 2P", monospace';
-    ctx.fillText(`Pokémon à attraper : ${typeLabel.toUpperCase()}`, W / 2, level === 1 ? 102 : 82);
+    ctx.font = '16px "Press Start 2P", monospace';
+    ctx.fillText(`Pokémon à attraper : ${typeLabel.toUpperCase()}`, W / 2, y);
+    y += 30;
 
-    // Séparateur
-    const sepY = level === 1 ? 122 : 102;
-    ctx.strokeStyle = '#333333';
+    // Séparateur haut
+    ctx.strokeStyle = '#2a2a2a';
     ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(80, sepY);
-    ctx.lineTo(W - 80, sepY);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W - 60, y); ctx.stroke();
+    y += 30;
 
-    // Règles — chaque ligne peut avoir sa propre taille
-    const lineH = 26;
-    interface RuleItem { color: string; text: string; font?: string; extraBefore?: number; }
-    const rules: RuleItem[] = [
-      { color: '#aaaaaa', text: '← → pour bouger   |   ESPACE pour tirer' },
-      { color: typeColor, text: `Attrape les Pokémon ${typeLabel} !`,
-        font: '14px "Press Start 2P", monospace', extraBefore: 10 },
-      { color: '#ff9944',
-        text: 'Attraper le mauvais type déchaîne la colère des Légendaires !',
-        extraBefore: 6 },
-      { color: '#888888', text: 'Si une balle ennemie te touche → question (vie en jeu !)' },
-      { color: '#888888', text: 'Plus de pokéballs ? Appuie sur ESPACE pour en regagner' },
-      { color: '#ffff44', text: `Tu gagnes ${AMMO_PER_CORRECT_QUIZ} pokéballs par bonne réponse` },
-    ];
+    // Contrôles
+    ctx.fillStyle = '#444444';
+    ctx.font = '12px "Press Start 2P", monospace';
+    ctx.fillText('← →  DÉPLACER          ESPACE  LANCER', W / 2, y);
+    y += 40;
 
-    let ruleY = sepY + 30;
-    for (const rule of rules) {
-      ruleY += rule.extraBefore ?? 0;
-      ctx.font = rule.font ?? '9px "Press Start 2P", monospace';
-      ctx.fillStyle = rule.color;
-      ctx.fillText(rule.text, W / 2, ruleY);
-      ruleY += rule.font ? 34 : lineH;
-    }
+    // Règle principale — type
+    ctx.fillStyle = typeColor;
+    ctx.font = '17px "Press Start 2P", monospace';
+    ctx.fillText(`Attrape les Pokémon ${typeLabel} !`, W / 2, y);
+    y += 42;
 
-    // Objectif du quiz
-    const goalY = ruleY + 10;
-    ctx.fillStyle = '#555555';
-    ctx.font = '9px "Press Start 2P", monospace';
-    ctx.fillText(`Objectif : gagner ${quota} pokéballs avant de jouer`, W / 2, goalY);
+    // Mauvais type
+    ctx.fillStyle = '#ff9944';
+    ctx.font = '13px "Press Start 2P", monospace';
+    ctx.fillText('Mauvais type  →  la colère des Légendaires !', W / 2, y);
+    y += 32;
 
-    // Bouton Start — clignotant
+    // Balle ennemie
+    ctx.fillStyle = '#888888';
+    ctx.font = '13px "Press Start 2P", monospace';
+    ctx.fillText('Balle ennemie  →  réponds ou tu perds une vie', W / 2, y);
+    y += 32;
+
+    // Rechargement
+    ctx.fillStyle = '#888888';
+    ctx.font = '13px "Press Start 2P", monospace';
+    ctx.fillText('Plus de pokéballs  →  ESPACE pour en regagner', W / 2, y);
+    y += 28;
+
+    // Séparateur bas
+    ctx.strokeStyle = '#2a2a2a';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W - 60, y); ctx.stroke();
+    y += 32;
+
+    // Phrase de transition
+    ctx.fillStyle = '#aaaaaa';
+    ctx.font = '11px "Press Start 2P", monospace';
+    ctx.fillText('Mais avant de commencer,', W / 2, y);
+    y += 22;
+    ctx.fillText('gagne tes pokéballs en répondant aux questions !', W / 2, y);
+    y += 34;
+
+    // Objectif
+    ctx.fillStyle = '#cccccc';
+    ctx.font = '14px "Press Start 2P", monospace';
+    ctx.fillText(`Objectif : ${quota} pokéballs`, W / 2, y);
+    y += 46;
+
+    // CTA clignotant
     if (Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '12px "Press Start 2P", monospace';
-      ctx.fillText('[ ENTRÉE ]  COMMENCER LE QUIZ', W / 2, goalY + 44);
+      ctx.fillStyle = '#00ff44';
+      ctx.font = '15px "Press Start 2P", monospace';
+      ctx.fillText('[ ENTRÉE ]  COMMENCER', W / 2, y);
     }
 
   } else {
@@ -341,10 +362,6 @@ export function renderPreLevelQuizScreen(
     ctx.fillStyle = '#00ff44';
     ctx.font = '16px "Press Start 2P", monospace';
     ctx.fillText(`${ammo} / ${quota}`, W / 2, by + bh + 30);
-
-    ctx.fillStyle = '#555555';
-    ctx.font = '9px "Press Start 2P", monospace';
-    ctx.fillText(`Bonne réponse → +${AMMO_PER_CORRECT_QUIZ} pokéballs   |   Mauvaise → +0`, W / 2, by + bh + 52);
   }
 
   ctx.textAlign = 'left';

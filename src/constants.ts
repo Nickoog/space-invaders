@@ -79,7 +79,8 @@ export const VICTORY_DELAY_MS  = 2000; // delay before victory inputs are accept
 export const LEVEL_UP_MS = 1500; // duration of the "NIVEAU X" splash (ms)
 
 // Ammo / quiz mechanic
-export const AMMO_PER_CORRECT_QUIZ   = 3;   // pokéballs gagnées par bonne réponse au quiz pré-niveau
+export const AMMO_FULL_BAG           = 20;  // taille fixe du sac de pokéballs (quota pré-niveau)
+export const AMMO_PER_CORRECT_QUIZ   = 3;   // pokéballs gagnées par bonne réponse (si preQuizCorrect = 5)
 export const AMMO_PER_CORRECT_RELOAD = 3;   // pokéballs gained per correct reload question
 export const AMMO_PER_WRONG_RELOAD   = 1;   // pokéballs gained per wrong reload question
 export const CAPTURE_QUESTION_SEC    = 15;  // timer for capture confirmation questions (shorter)

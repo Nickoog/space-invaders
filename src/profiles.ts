@@ -46,7 +46,9 @@ export function loadProfiles(): PlayerProfile[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isValidProfile);
+    return parsed
+      .filter(isValidProfile)
+      .map(p => ({ ...p, preQuizCorrect: (p as { preQuizCorrect?: number }).preQuizCorrect ?? 3 }));
   } catch {
     return [];
   }
@@ -73,6 +75,7 @@ export function createProfile(
     interests,
     age,
     difficultyOffset: 0,
+    preQuizCorrect:  3,
     createdAt:       Date.now(),
   };
 }

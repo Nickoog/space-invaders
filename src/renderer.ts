@@ -521,13 +521,6 @@ export function drawHUD(ctx: CanvasRenderingContext2D, game: GameState): void {
     ctx.font        = '11px "Press Start 2P", monospace';
   }
 
-  // Hard mode badge
-  if (game.hardMode) {
-    ctx.textAlign  = 'center';
-    ctx.fillStyle  = '#ff4444';
-    ctx.font       = '10px "Press Start 2P", monospace';
-    ctx.fillText('★ MODE HARD', W / 2, H - 12);
-  }
 
   ctx.fillStyle = '#00ff44';
   ctx.fillRect(0, H - 38, W, 2);

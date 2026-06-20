@@ -9,7 +9,7 @@ import {
   DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS,
   LEVEL_CLEAR_RATIO,
   WRONG_TYPE_PENALTY_MS,
-  AMMO_PER_CORRECT_QUIZ, AMMO_PER_CORRECT_RELOAD, AMMO_PER_WRONG_RELOAD,
+  AMMO_FULL_BAG, AMMO_PER_CORRECT_RELOAD, AMMO_PER_WRONG_RELOAD,
 } from './constants.js';
 import { updateProfile } from './profiles.js';
 import { keys, consumeKey } from './input.js';
@@ -44,23 +44,23 @@ function startLevel(game: GameState, level: number): void {
   console.debug(`[GRID] Niveau ${level} → ${correctFlags.length - wrongCount} correct, ${wrongCount} mauvais type`);
   game.grid      = createGrid(level, ids, correctFlags, levelType);
   game.bullets   = createBullets();
-  game.ammo           = 0;
-  game.ammoQuota      = Math.ceil(correctFlags.filter(f => f).length * LEVEL_CLEAR_RATIO);
+  game.ammo      = 0;
+  game.ammoQuota = AMMO_FULL_BAG;
   game.quizInProgress = false;
   game.pokemonTypePool = [];
-  game.state           = S.PRE_LEVEL_QUIZ;
+  if (game.skipLevels) {
+    game.ammo  = game.ammoQuota;
+    game.state = S.PLAYING;
+  } else {
+    game.state = S.PRE_LEVEL_QUIZ;
+  }
   void replenishPool(game);
   void replenishPokemonPool(game);
 }
 
-// Exported so homeScreen.ts can call it after profile selection.
-// hardMode = true activates New Game+ (2 questions per enemy hit).
-export function startGame(game: GameState, hardMode = false): void {
-  game.score                    = 0;
-  game.lives                    = 3;
-  game.hardMode                 = hardMode;
-  game.questionsInRound         = 1;
-  game.questionsAnsweredInRound = 0;
+export function startGame(game: GameState): void {
+  game.score            = 0;
+  game.lives            = 3;
   game.difficultyOffset = game.activeProfile?.difficultyOffset ?? 0;
   game.highScore        = game.activeProfile?.highScore ?? 0;
   game.questionPool     = [];
@@ -76,7 +76,6 @@ function endGame(game: GameState): void {
     if (game.score > game.activeProfile.highScore) {
       game.activeProfile.highScore = game.score;
     }
-    game.activeProfile.difficultyOffset = game.difficultyOffset;
     updateProfile(game.activeProfile);
   }
   if (game.score > game.highScore) game.highScore = game.score;
@@ -88,9 +87,7 @@ function endGame(game: GameState): void {
 // Pauses the game (QUESTION state) and shows the AI question modal.
 // In hard mode (game.hardMode), 2 questions must be answered per hit.
 function triggerQuestion(game: GameState): void {
-  game.state                    = S.QUESTION;
-  game.questionsAnsweredInRound = 0;
-  game.questionsInRound         = game.hardMode ? 2 : 1;
+  game.state = S.QUESTION;
   askNextQuestion(game);
 }
 
@@ -101,25 +98,12 @@ function askNextQuestion(game: GameState): void {
   void replenishPokemonPool(game);
 
   showQuestionModal(question, (correct: boolean) => {
-    const limit = DIFFICULTY_DELTA_MS * DIFFICULTY_MAX_STEPS;
-
     if (correct) {
-      // Life saved, score bonus, longer invincibility, game gets a little easier
-      game.score             += CORRECT_ANSWER_BONUS;
-      game.bonusMessage       = `+${CORRECT_ANSWER_BONUS} pts`;
-      game.bonusMessageTimer  = BONUS_MESSAGE_MS;
-      game.difficultyOffset   = Math.min(limit, game.difficultyOffset + DIFFICULTY_DELTA_MS);
+      game.score            += CORRECT_ANSWER_BONUS;
+      game.bonusMessage      = `+${CORRECT_ANSWER_BONUS} pts`;
+      game.bonusMessageTimer = BONUS_MESSAGE_MS;
       if (game.player) game.player.invincible = HIT_INVINCIBLE_CORRECT_MS;
-
-      game.questionsAnsweredInRound++;
-      if (game.questionsAnsweredInRound < game.questionsInRound) {
-        // Hard mode: chain to the next question in this round
-        askNextQuestion(game);
-        return;
-      }
     } else {
-      // Life lost, game gets a little harder
-      game.difficultyOffset = Math.max(-limit, game.difficultyOffset - DIFFICULTY_DELTA_MS);
       game.lives--;
       if (game.lives <= 0) {
         endGame(game);
@@ -128,8 +112,6 @@ function askNextQuestion(game: GameState): void {
       if (game.player) game.player.invincible = HIT_INVINCIBLE_MS;
     }
     game.state = S.PLAYING;
-
-    // Refill pool in background so the next hit is instant
     void replenishPool(game);
   });
 }
@@ -137,11 +119,14 @@ function askNextQuestion(game: GameState): void {
 // ── Pre-level quiz ───────────────────────────────────────────────────────────
 
 function askPreLevelQuestion(game: GameState): void {
-  const question = game.questionPool.shift() ?? getRandomFallback();
+  const question      = game.questionPool.shift() ?? getRandomFallback();
   trackQuestion(game, question);
-  const quota    = game.ammoQuota;
+  const quota         = game.ammoQuota;
+  const preQuizCorrect = game.activeProfile?.preQuizCorrect ?? 5;
+  const ammoPerAnswer  = Math.ceil(quota / preQuizCorrect);
+
   showQuestionModal(question, (correct) => {
-    if (correct) game.ammo += AMMO_PER_CORRECT_QUIZ;
+    if (correct) game.ammo = Math.min(quota, game.ammo + ammoPerAnswer);
     void replenishPool(game);
     if (game.ammo >= quota) {
       game.state = S.PLAYING;
@@ -150,10 +135,10 @@ function askPreLevelQuestion(game: GameState): void {
     }
   }, {
     title:         `⚡ NIVEAU ${game.level} — POKÉBALLS !`,
-    subtitle:      `Bonne réponse = +${AMMO_PER_CORRECT_QUIZ} pokéballs · Mauvaise = +0`,
-    resultCorrect: `✅ +${AMMO_PER_CORRECT_QUIZ} pokéballs !`,
+    subtitle:      `Bonne réponse = +${ammoPerAnswer} pokéball${ammoPerAnswer > 1 ? 's' : ''} · Mauvaise = +0`,
+    resultCorrect: `✅ +${ammoPerAnswer} pokéball${ammoPerAnswer > 1 ? 's' : ''} !`,
     resultWrong:   '❌ Encore une question !',
-    progress:      { current: game.ammo, max: game.ammoQuota },
+    progress:      { current: game.ammo, max: quota },
   });
 }
 
@@ -196,8 +181,9 @@ function update(game: GameState, dt: number): void {
     game.ammo--;
   }
 
-  // Reload question — wait for all bullets to land before triggering
-  if (game.ammo <= 0 && activePBullets === 0 && consumeKey('Space')) {
+  // Reload question — recount AFTER potentially adding a new bullet this frame
+  const activePBulletsNow = bullets.player.filter(b => b.active).length;
+  if (game.ammo <= 0 && activePBulletsNow === 0 && consumeKey('Space')) {
     triggerReloadQuestion(game);
     return;
   }
@@ -285,6 +271,11 @@ function render(ctx: CanvasRenderingContext2D, game: GameState): void {
 export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void {
   let lastTime: number | null = null;
   let acc = 0;
+  let skipLevelPending = false;
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.code === 'KeyN') skipLevelPending = true;
+  });
 
   function loop(ts: number): void {
     if (lastTime === null) lastTime = ts;
@@ -298,6 +289,17 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
 
     const delta = Math.min(ts - lastTime, 100);
     lastTime = ts;
+
+    // Skip-level cheat — works in any active game state
+    if (skipLevelPending) {
+      skipLevelPending = false;
+      const activeGameState = game.state !== S.HOME && game.state !== S.MENU && game.state !== S.GAME_OVER && game.state !== S.VICTORY;
+      if (game.skipLevels && activeGameState) {
+        game.nextLevel    = game.level + 1;
+        game.levelUpTimer = 0;
+        game.state        = S.LEVEL_UP;
+      }
+    }
 
     if (game.state === S.HOME) {
       // DOM overlay (homeScreen.ts) handles all UI — canvas stays black.
@@ -320,7 +322,6 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
           if (game.activeProfile) {
             game.activeProfile.gamesPlayed++;
             if (game.score > game.activeProfile.highScore) game.activeProfile.highScore = game.score;
-            game.activeProfile.difficultyOffset = game.difficultyOffset;
             updateProfile(game.activeProfile);
           }
           if (game.score > game.highScore) game.highScore = game.score;
@@ -329,14 +330,12 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
         } else {
           const interlude = getInterludeForLevel(game.level);
           if (interlude) {
-            game.interludeMessage = interlude.message;
-            if (interlude.photo) {
-              const img = new Image();
-              img.src = `/interludes/${interlude.photo}`;
-              game.interludeImage = img;
-            } else {
-              game.interludeImage = null;
-            }
+            const img = new Image();
+            img.onload = () => { game.interludeImage = img; };
+            img.src = `${import.meta.env.BASE_URL}interludes/${interlude.photo}`;
+            game.interludeImage = null;
+            game.levelUpTimer = 0;
+            consumeKey('Enter');
             game.state = S.INTERLUDE;
           } else {
             startLevel(game, game.nextLevel);
@@ -344,8 +343,9 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
         }
       }
     } else if (game.state === S.INTERLUDE) {
-      renderInterludeScreen(ctx, game.interludeMessage, game.interludeImage);
-      if (consumeKey('Enter')) {
+      game.levelUpTimer += delta;
+      renderInterludeScreen(ctx, game.interludeImage);
+      if (game.levelUpTimer > 1500 && consumeKey('Enter')) {
         startLevel(game, game.nextLevel);
       }
     } else if (game.state === S.VICTORY) {
@@ -353,8 +353,12 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
       renderVictoryScreen(ctx, game.score, game.highScore, game.victoryDelay);
       if (game.victoryDelay > VICTORY_DELAY_MS) {
         if (consumeKey('Enter')) {
-          // New Game+ — replay from level 1 in hard mode
-          startGame(game, true);
+          if (game.activeProfile) {
+            game.activeProfile.difficultyOffset = -2 * DIFFICULTY_DELTA_MS;
+            game.activeProfile.preQuizCorrect   = 5;
+            updateProfile(game.activeProfile);
+          }
+          startGame(game);
         } else if (consumeKey('Escape')) {
           game.activeProfile = null;
           game.state = S.HOME;
@@ -376,6 +380,11 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
     } else if (game.state === S.GAME_OVER) {
       game.gameOverDelay += delta;
       if (game.gameOverDelay > GAMEOVER_DELAY_MS && consumeKey('Enter')) {
+        if (game.activeProfile) {
+          game.activeProfile.difficultyOffset = -2 * DIFFICULTY_DELTA_MS;
+          game.activeProfile.preQuizCorrect   = 5;
+          updateProfile(game.activeProfile);
+        }
         game.activeProfile = null;
         game.state = S.HOME;
         game.onHome?.();
