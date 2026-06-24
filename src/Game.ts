@@ -30,6 +30,8 @@ export function createGame(spriteMap: Map<number, HTMLImageElement | null>): Gam
     ammoQuota:                 0,
     quizInProgress:            false,
     skipLevels:                false,
+    gameStartTime:             0,
+    emailSent:                 false,
     questionHistory:           [],
     topicIndex:                0,
     pokemonTypePool:           [],

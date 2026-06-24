@@ -101,6 +101,8 @@ export interface GameState {
   ammoQuota: number;     // pokéballs needed to start this level (pre-level quiz target)
   quizInProgress: boolean; // true once player has clicked "start quiz" — prevents re-trigger
   skipLevels: boolean;     // si true, la touche N passe au niveau suivant pendant le jeu
+  gameStartTime: number;   // timestamp ms au début de la partie (pour calculer la durée)
+  emailSent: boolean;      // empêche l'envoi multiple dans le même frame loop
   // Question variety
   questionHistory: string[]; // textes des 25 dernières questions posées (FIFO anti-doublon)
   topicIndex: number;        // pointeur de rotation des thèmes geek

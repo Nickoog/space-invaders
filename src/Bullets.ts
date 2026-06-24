@@ -10,5 +10,5 @@ export function updateBullets(bullets: Bullets, dt: number): void {
   for (const b of bullets.player) b.y += b.vy * s;
   for (const b of bullets.enemy)  b.y += b.vy * s;
   bullets.player = bullets.player.filter((b: Bullet) => b.active && b.y + b.h > 0);
-  bullets.enemy  = bullets.enemy.filter( (b: Bullet) => b.active && b.y < H + 20);
+  bullets.enemy  = bullets.enemy.filter( (b: Bullet) => b.active && b.y <= H + 20);
 }

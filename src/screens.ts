@@ -138,7 +138,7 @@ function drawConfetti(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.translate(x + size / 2, y + size / 2);
     ctx.rotate(now * 0.002 * (i % 2 === 0 ? 1 : -1) + i);
-    ctx.fillStyle = colors[i % colors.length] as string;
+    ctx.fillStyle = colors[i % colors.length]!;
     ctx.fillRect(-size / 2, -size / 2, size, size);
     ctx.restore();
   }
@@ -195,7 +195,7 @@ export function renderVictoryScreen(ctx: CanvasRenderingContext2D, score: number
     if (Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {
       ctx.fillStyle = '#ffffff';
       ctx.font = '11px "Press Start 2P", monospace';
-      ctx.fillText('[ ENTRÉE ]  Rejouer en MODE HARD', W / 2, 430);
+      ctx.fillText('[ ENTRÉE ]  Rejouer', W / 2, 430);
       ctx.fillStyle = '#888888';
       ctx.font = '11px "Press Start 2P", monospace';
       ctx.fillText('[ ÉCHAP ]  Retour au menu', W / 2, 462);

@@ -17,8 +17,8 @@ interface Bounds {
 export function createGrid(
   level: number,
   ids: number[],
-  correctFlags: boolean[],
-  levelType: string,
+  correctFlags: boolean[] = ids.map(() => true),
+  levelType: string = '',
 ): Grid {
   const totalW = ENEMY_COLS * (ENEMY_W + ENEMY_X_GAP) - ENEMY_X_GAP;
   const startX = (W - totalW) / 2;

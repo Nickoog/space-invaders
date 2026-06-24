@@ -1,6 +1,6 @@
 import {
   W, H, PLAYER_W,
-  CAUGHT_FLASH_MS,
+  CAUGHT_FLASH_MS, WRONG_TYPE_PENALTY_MS,
   ROW_COLORS, ENEMY_W, ENEMY_H, ENEMY_X_GAP, ENEMY_Y_GAP,
   BLINK_INTERVAL_MS, LEVEL_CLEAR_RATIO,
 } from './constants.js';
@@ -443,7 +443,7 @@ export function drawEnemyBullet(ctx: CanvasRenderingContext2D, bullet: Bullet, l
 export function drawPenaltyVignette(ctx: CanvasRenderingContext2D, penaltyTimer: number): void {
   // Pulse: blink fast at start, fade as timer runs down
   const blink = Math.sin(Date.now() / 80) * 0.5 + 0.5;
-  ctx.globalAlpha = Math.min(0.55, (penaltyTimer / 4000) * 0.55) * blink;
+  ctx.globalAlpha = Math.min(0.55, (penaltyTimer / WRONG_TYPE_PENALTY_MS) * 0.55) * blink;
   ctx.fillStyle   = '#ff0000';
   const thickness = 24;
   ctx.fillRect(0, 0, W, thickness);
@@ -500,6 +500,11 @@ export function drawHUD(ctx: CanvasRenderingContext2D, game: GameState): void {
   ctx.textAlign = 'center';
   ctx.fillStyle = game.ammo > 0 ? '#00ff44' : '#ff4444';
   ctx.fillText(`AMMO ×${game.ammo}`, W / 2, H - 12);
+  if (game.ammo === 0) {
+    ctx.fillStyle = '#ffff00';
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.fillText('[ ESPACE ] recharger', W / 2, H - 28);
+  }
 
   // Pokémon remaining to catch before level ends — only correct-type count
   const aliveCorrect = game.grid?.enemies.filter(e => e.alive && e.correctType).length ?? 0;

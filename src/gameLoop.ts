@@ -23,6 +23,7 @@ import { overlap } from './collision.js';
 import { showQuestionModal } from './ui/modal.js';
 import { getRandomFallback, replenishPool, replenishPokemonPool } from './ai/questionService.js';
 import { getInterludeForLevel } from './interludes.js';
+import { sendGameEmail } from './email.js';
 import type { GameState } from './types.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,6 +66,8 @@ export function startGame(game: GameState): void {
   game.highScore        = game.activeProfile?.highScore ?? 0;
   game.questionPool     = [];
   game.lastQuestionType = null;
+  game.gameStartTime    = Date.now();
+  game.emailSent        = false;
   startLevel(game, 1);
   // startLevel sets state to PRE_LEVEL_QUIZ and triggers the quiz
 }
@@ -79,13 +82,13 @@ function endGame(game: GameState): void {
     updateProfile(game.activeProfile);
   }
   if (game.score > game.highScore) game.highScore = game.score;
+  sendGameEmail(game, 'gameover');
   game.gameOverDelay = 0;
   game.state = S.GAME_OVER;
 }
 
 // Called when an enemy bullet hits the player.
 // Pauses the game (QUESTION state) and shows the AI question modal.
-// In hard mode (game.hardMode), 2 questions must be answered per hit.
 function triggerQuestion(game: GameState): void {
   game.state = S.QUESTION;
   askNextQuestion(game);
@@ -325,6 +328,7 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
             updateProfile(game.activeProfile);
           }
           if (game.score > game.highScore) game.highScore = game.score;
+          sendGameEmail(game, 'victory');
           game.victoryDelay = 0;
           game.state = S.VICTORY;
         } else {
