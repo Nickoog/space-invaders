@@ -171,24 +171,27 @@ function update(game: GameState, dt: number): void {
 
   // Player movement — blocked from firing when ammo is empty
   const noAmmo = game.ammo <= 0;
-  const activePBullets = bullets.player.filter(b => b.active).length;
+  let activePBullets = 0;
+  for (const b of bullets.player) if (b.active) activePBullets++;
   const newPlayerBullet = updatePlayer(player, dt, keys, activePBullets >= MAX_PLAYER_BULLETS || noAmmo);
   if (newPlayerBullet) {
     bullets.player.push(newPlayerBullet);
     game.ammo--;
+    activePBullets++;
   }
 
   // Reload question — recount AFTER potentially adding a new bullet this frame
-  const activePBulletsNow = bullets.player.filter(b => b.active).length;
-  if (game.ammo <= 0 && activePBulletsNow === 0 && consumeKey('Space')) {
+  if (game.ammo <= 0 && activePBullets === 0 && consumeKey('Space')) {
     triggerReloadQuestion(game);
     return;
   }
 
   // Enemy grid step + fire (capped at MAX_ENEMY_BULLETS simultaneous)
   const newEnemyBullet = updateGrid(grid, dt, game.level, game.difficultyOffset);
-  if (newEnemyBullet && bullets.enemy.filter(b => b.active).length < MAX_ENEMY_BULLETS) {
-    bullets.enemy.push(newEnemyBullet);
+  if (newEnemyBullet) {
+    let activeEnemyBullets = 0;
+    for (const b of bullets.enemy) if (b.active) activeEnemyBullets++;
+    if (activeEnemyBullets < MAX_ENEMY_BULLETS) bullets.enemy.push(newEnemyBullet);
   }
 
   // Move all bullets
@@ -230,8 +233,12 @@ function update(game: GameState, dt: number): void {
   if (gb && gb.bottom >= PLAYER_Y) { endGame(game); return; }
 
   // Level clear — only correct-type catches count toward progression
-  const aliveCorrect   = grid.enemies.filter(e => e.alive && e.correctType).length;
-  const totalCorrect   = grid.enemies.filter(e => e.correctType).length;
+  let aliveCorrect = 0;
+  let totalCorrect = 0;
+  for (const e of grid.enemies) {
+    if (e.correctType) totalCorrect++;
+    if (e.alive && e.correctType) aliveCorrect++;
+  }
   const clearThreshold = Math.floor(totalCorrect * (1 - LEVEL_CLEAR_RATIO));
   if (aliveCorrect <= clearThreshold) {
     game.nextLevel    = game.level + 1;

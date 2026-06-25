@@ -6,6 +6,7 @@ import { FALLBACK_QUESTIONS } from './fallbackQuestions.js';
 import { QUESTION_POOL_TARGET, QUESTION_TIMEOUT_MS } from '../constants.js';
 import { GEEK_PROMPTS, GEEK_TOPICS, POKEMON_TYPE_PROMPTS, getDifficultyTier } from './promptLibrary.js';
 import type { PokemonType } from '../api/pokeapi.js';
+import { shuffleArray } from '../utils.js';
 
 // ── Zod schema (source of truth for the AI response shape) ───────────────────
 
@@ -24,14 +25,8 @@ export function truncate(s: string, max: number): string {
   return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
 }
 
-export function shuffleArray<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j]!, a[i]!];
-  }
-  return a;
-}
+// re-export so tests and callers that import from this module continue to work
+export { shuffleArray } from '../utils.js';
 
 // Ensures display limits and randomizes choice order (correct_answer is text-matched, not index-based).
 function normalizeQuestion(q: QuestionData): QuestionData {

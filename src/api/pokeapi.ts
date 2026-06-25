@@ -1,4 +1,5 @@
 import { GEN1_COUNT, ENEMY_COLS, ENEMY_ROWS, POKEMON_LOAD_TIMEOUT_MS, WRONG_TYPE_RATIO } from '../constants.js';
+import { shuffleArray } from '../utils.js';
 
 const TOTAL = ENEMY_COLS * ENEMY_ROWS; // 55
 const CACHE_KEY_TYPES = 'pokemon_invaders_types_v1';
@@ -101,15 +102,6 @@ export async function preloadSprites(
 
 // ── ID selection per level ───────────────────────────────────────────────────
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j]!, a[i]!];
-  }
-  return a;
-}
-
 export function getIdsForLevel(level: number): { ids: number[]; correctFlags: boolean[]; levelType: PokemonType } {
   const levelType = getLevelType(level);
 
@@ -146,10 +138,10 @@ export function getIdsForLevel(level: number): { ids: number[]; correctFlags: bo
   const correctCount = TOTAL - wrongCount;
 
   // Allow duplicates when there aren't enough unique Pokémon of the target type
-  const shuffledCorrect = shuffle(correctIds);
+  const shuffledCorrect = shuffleArray(correctIds);
   const pickedCorrect: number[] = Array.from({ length: correctCount }, (_, i) => shuffledCorrect[i % shuffledCorrect.length]!);
 
-  const pickedWrong = shuffle(wrongIds).slice(0, wrongCount);
+  const pickedWrong = shuffleArray(wrongIds).slice(0, wrongCount);
 
   // Bottom SAFE_ROWS rows are always correct-type so the player is never forced to hit a wrong-type
   // to progress. Wrong-type enemies only appear in the top (ENEMY_ROWS - SAFE_ROWS) rows.
@@ -159,8 +151,8 @@ export function getIdsForLevel(level: number): { ids: number[]; correctFlags: bo
   const correctForSafe  = pickedCorrect.slice(0, safeSlots);
   const correctForMixed = pickedCorrect.slice(safeSlots);  // remaining 17 correct for top rows
 
-  const topSection    = shuffle([...correctForMixed, ...pickedWrong]); // 17 correct + 16 wrong = 33
-  const bottomSection = shuffle(correctForSafe);                        // 22 correct
+  const topSection    = shuffleArray([...correctForMixed, ...pickedWrong]); // 17 correct + 16 wrong = 33
+  const bottomSection = shuffleArray(correctForSafe);                        // 22 correct
 
   // combined is row-major: indices 0–32 = rows 0-2 (top), 33–54 = rows 3-4 (bottom)
   const combined = [...topSection, ...bottomSection];

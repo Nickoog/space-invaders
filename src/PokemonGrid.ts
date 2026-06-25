@@ -133,13 +133,14 @@ export function updateGrid(grid: Grid, dt: number, level: number, difficultyOffs
     grid.fireTimer = base;
 
     if (alive.length) {
-      const byCol: Enemy[] = [];
-      for (let c = 0; c < ENEMY_COLS; c++) {
-        const col = alive
-          .filter(e => e.col === c && e.caughtFlash === 0)
-          .sort((a, b) => b.row - a.row);
-        if (col.length) byCol.push(col[0]!);
+      // Single pass: find the bottommost (highest row index) ready enemy per column
+      const frontByCol: Array<Enemy | undefined> = [];
+      for (const e of alive) {
+        if (e.caughtFlash > 0) continue;
+        const cur = frontByCol[e.col];
+        if (cur === undefined || e.row > cur.row) frontByCol[e.col] = e;
       }
+      const byCol = frontByCol.filter((e): e is Enemy => e !== undefined);
       if (byCol.length) {
         const shooter = byCol[Math.floor(Math.random() * byCol.length)]!;
         const pos = getEnemyPos(grid, shooter);
