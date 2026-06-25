@@ -11,7 +11,7 @@ import {
   WRONG_TYPE_PENALTY_MS,
   AMMO_FULL_BAG, AMMO_PER_CORRECT_RELOAD, AMMO_PER_WRONG_RELOAD,
 } from './constants.js';
-import { updateProfile } from './profiles.js';
+import { saveStats } from './flavienProfile.js';
 import { keys, consumeKey } from './input.js';
 import { createPlayer, updatePlayer } from './Player.js';
 import { createGrid, updateGrid, getGridBounds, getEnemyPos } from './PokemonGrid.js';
@@ -62,8 +62,8 @@ function startLevel(game: GameState, level: number): void {
 export function startGame(game: GameState): void {
   game.score            = 0;
   game.lives            = 3;
-  game.difficultyOffset = game.activeProfile?.difficultyOffset ?? 0;
-  game.highScore        = game.activeProfile?.highScore ?? 0;
+  game.difficultyOffset = game.stats.difficultyOffset;
+  game.highScore        = game.stats.highScore;
   game.questionPool     = [];
   game.lastQuestionType = null;
   game.gameStartTime    = Date.now();
@@ -73,14 +73,9 @@ export function startGame(game: GameState): void {
 }
 
 function endGame(game: GameState): void {
-  // Persist stats to the active profile before showing game over screen.
-  if (game.activeProfile) {
-    game.activeProfile.gamesPlayed++;
-    if (game.score > game.activeProfile.highScore) {
-      game.activeProfile.highScore = game.score;
-    }
-    updateProfile(game.activeProfile);
-  }
+  game.stats.gamesPlayed++;
+  if (game.score > game.stats.highScore) game.stats.highScore = game.score;
+  saveStats(game.stats);
   if (game.score > game.highScore) game.highScore = game.score;
   sendGameEmail(game, 'gameover');
   game.gameOverDelay = 0;
@@ -125,7 +120,7 @@ function askPreLevelQuestion(game: GameState): void {
   const question      = game.questionPool.shift() ?? getRandomFallback();
   trackQuestion(game, question);
   const quota         = game.ammoQuota;
-  const preQuizCorrect = game.activeProfile?.preQuizCorrect ?? 5;
+  const preQuizCorrect = game.stats.preQuizCorrect;
   const ammoPerAnswer  = Math.ceil(quota / preQuizCorrect);
 
   showQuestionModal(question, (correct) => {
@@ -296,7 +291,7 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
     // Skip-level cheat — works in any active game state
     if (skipLevelPending) {
       skipLevelPending = false;
-      const activeGameState = game.state !== S.HOME && game.state !== S.MENU && game.state !== S.GAME_OVER && game.state !== S.VICTORY;
+      const activeGameState = game.state !== S.MENU && game.state !== S.GAME_OVER && game.state !== S.VICTORY;
       if (game.skipLevels && activeGameState) {
         game.nextLevel    = game.level + 1;
         game.levelUpTimer = 0;
@@ -304,11 +299,7 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
       }
     }
 
-    if (game.state === S.HOME) {
-      // DOM overlay (homeScreen.ts) handles all UI — canvas stays black.
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, W, H);
-    } else if (game.state === S.PLAYING) {
+    if (game.state === S.PLAYING) {
       acc += delta;
       while (acc >= STEP) {
         update(game, STEP);
@@ -322,11 +313,9 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
       if (game.levelUpTimer >= LEVEL_UP_MS) {
         if (won) {
           // All 17 levels completed — save stats then show victory screen
-          if (game.activeProfile) {
-            game.activeProfile.gamesPlayed++;
-            if (game.score > game.activeProfile.highScore) game.activeProfile.highScore = game.score;
-            updateProfile(game.activeProfile);
-          }
+          game.stats.gamesPlayed++;
+          if (game.score > game.stats.highScore) game.stats.highScore = game.score;
+          saveStats(game.stats);
           if (game.score > game.highScore) game.highScore = game.score;
           sendGameEmail(game, 'victory');
           game.victoryDelay = 0;
@@ -357,16 +346,12 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
       renderVictoryScreen(ctx, game.score, game.highScore, game.victoryDelay);
       if (game.victoryDelay > VICTORY_DELAY_MS) {
         if (consumeKey('Enter')) {
-          if (game.activeProfile) {
-            game.activeProfile.difficultyOffset = -2 * DIFFICULTY_DELTA_MS;
-            game.activeProfile.preQuizCorrect   = 5;
-            updateProfile(game.activeProfile);
-          }
+          game.stats.difficultyOffset = -2 * DIFFICULTY_DELTA_MS;
+          game.stats.preQuizCorrect   = 5;
+          saveStats(game.stats);
           startGame(game);
         } else if (consumeKey('Escape')) {
-          game.activeProfile = null;
-          game.state = S.HOME;
-          game.onHome?.();
+          game.state = S.MENU;
         }
       }
     } else if (game.state === S.PRE_LEVEL_QUIZ) {
@@ -384,14 +369,7 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
     } else if (game.state === S.GAME_OVER) {
       game.gameOverDelay += delta;
       if (game.gameOverDelay > GAMEOVER_DELAY_MS && consumeKey('Enter')) {
-        if (game.activeProfile) {
-          game.activeProfile.difficultyOffset = -2 * DIFFICULTY_DELTA_MS;
-          game.activeProfile.preQuizCorrect   = 5;
-          updateProfile(game.activeProfile);
-        }
-        game.activeProfile = null;
-        game.state = S.HOME;
-        game.onHome?.();
+        startGame(game);
       }
       renderGameOverScreen(ctx, game.score, game.highScore, game.level, game.gameOverDelay);
     }

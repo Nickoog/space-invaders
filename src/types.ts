@@ -1,15 +1,10 @@
 // ── Domain types ─────────────────────────────────────────────────────────────
 
-export interface PlayerProfile {
-  id: string;
-  pseudo: string;
+export interface FlavienStats {
   highScore: number;
   gamesPlayed: number;
-  interests: string[];
-  age: number | null;
   difficultyOffset: number;
-  preQuizCorrect: number;  // bonnes réponses requises avant le niveau (défaut 5)
-  createdAt: number;
+  preQuizCorrect: number;
 }
 
 export interface Player {
@@ -90,9 +85,8 @@ export interface GameState {
   difficultyOffset: number; // ms added to speed/fire intervals (positive = easier)
   bonusMessage: string;      // transient HUD message after correct answer
   bonusMessageTimer: number; // counts down to 0 (ms)
-  // Profile feature
-  activeProfile: PlayerProfile | null;
-  onHome: (() => void) | null;
+  // Flavien's persistent stats
+  stats: FlavienStats;
   // Victory / Interlude
   victoryDelay: number;
   interludeImage: HTMLImageElement | null;

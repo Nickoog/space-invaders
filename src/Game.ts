@@ -1,29 +1,27 @@
 import { S } from './constants.js';
+import { loadStats } from './flavienProfile.js';
 import type { GameState } from './types.js';
 
-// Returns the initial game state. spriteMap is a Map<pokemonId, HTMLImageElement|null>.
-// highScore and difficultyOffset are restored from the active profile when a game starts.
 export function createGame(spriteMap: Map<number, HTMLImageElement | null>): GameState {
   return {
-    state:            S.HOME,
+    state:             S.MENU,
     spriteMap,
-    score:            0,
-    highScore:        0,
-    lives:            3,
-    level:            1,
-    gameOverDelay:    0,
-    levelUpTimer:     0,
-    nextLevel:        1,
-    player:           null,
-    grid:             null,
-    bullets:          null,
+    score:             0,
+    highScore:         0,
+    lives:             3,
+    level:             1,
+    gameOverDelay:     0,
+    levelUpTimer:      0,
+    nextLevel:         1,
+    player:            null,
+    grid:              null,
+    bullets:           null,
     questionPool:      [],
     lastQuestionType:  null,
     difficultyOffset:  0,
     bonusMessage:      '',
     bonusMessageTimer: 0,
-    activeProfile:    null,
-    onHome:           null,
+    stats:             loadStats(),
     victoryDelay:              0,
     interludeImage:            null,
     ammo:                      0,

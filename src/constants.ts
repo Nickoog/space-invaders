@@ -69,7 +69,7 @@ export const BLINK_INTERVAL_MS = 100;   // invincibility blink interval (ms)
 export const MENU_BLINK_MS     = 500;   // menu/game-over text blink interval (ms)
 
 // Game states
-export const S = { LOADING: 'LOADING', HOME: 'HOME', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION', LEVEL_UP: 'LEVEL_UP', VICTORY: 'VICTORY', INTERLUDE: 'INTERLUDE', PRE_LEVEL_QUIZ: 'PRE_LEVEL_QUIZ' };
+export const S = { LOADING: 'LOADING', MENU: 'MENU', PLAYING: 'PLAYING', GAME_OVER: 'GAME_OVER', QUESTION: 'QUESTION', LEVEL_UP: 'LEVEL_UP', VICTORY: 'VICTORY', INTERLUDE: 'INTERLUDE', PRE_LEVEL_QUIZ: 'PRE_LEVEL_QUIZ' };
 
 // Flavien's birthday personalisation
 export const MAX_LEVELS        = 17;   // number of levels before the victory screen

@@ -30,14 +30,14 @@ export function sendGameEmail(game: GameState, type: 'victory' | 'gameover'): vo
     event_title:  type === 'victory'
       ? '🏆 Flavien a terminé le jeu !'
       : `💀 Game Over — Niveau ${game.level}`,
-    player_name:  game.activeProfile?.pseudo  ?? 'Invité',
+    player_name:  'Flavien',
     score:        String(game.score),
     level:        String(game.level),
     lives:        String(game.lives),
     duration:     `${minutes}m ${seconds}s`,
-    games_played: String(game.activeProfile?.gamesPlayed ?? 0),
+    games_played: String(game.stats.gamesPlayed),
     new_record:   isRecord ? 'OUI ✓' : 'non',
-    difficulty:   diffLabel(game.activeProfile?.difficultyOffset ?? 0),
+    difficulty:   diffLabel(game.stats.difficultyOffset),
   };
 
   emailjs.send(serviceId, templateId, params, publicKey).catch(() => { /* silencieux */ });
