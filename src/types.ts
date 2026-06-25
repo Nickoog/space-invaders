@@ -1,3 +1,6 @@
+import type { GameStateName } from './constants.js';
+import type { PokemonType } from './api/pokeapi.js';
+
 // ── Domain types ─────────────────────────────────────────────────────────────
 
 export interface FlavienStats {
@@ -21,7 +24,6 @@ export interface Enemy {
   caughtFlash: number;
   pokemonId: number;
   correctType: boolean;    // true = matches the level's target type
-  pendingCapture: boolean; // true = capture question in progress
 }
 
 export interface Grid {
@@ -33,7 +35,7 @@ export interface Grid {
   moveInterval: number;
   stepPending: boolean;
   fireTimer: number;
-  levelType: string;    // target type for this level (e.g. 'fire')
+  levelType: PokemonType; // target type for this level (e.g. 'fire')
   penaltyTimer: number; // ms remaining of wrong-type fire penalty (0 = no penalty)
 }
 
@@ -66,8 +68,19 @@ export interface QuestionData {
   source?: 'ai' | 'fallback';
 }
 
+// Narrows GameState for states where player/grid/bullets are guaranteed non-null (PLAYING, QUESTION)
+export type ActiveGameState = GameState & {
+  readonly player: Player;
+  readonly grid: Grid;
+  readonly bullets: Bullets;
+};
+
+export function isGameActive(game: GameState): game is ActiveGameState {
+  return game.player !== null && game.grid !== null && game.bullets !== null;
+}
+
 export interface GameState {
-  state: string;
+  state: GameStateName;
   spriteMap: Map<number, HTMLImageElement | null>;
   score: number;
   highScore: number;

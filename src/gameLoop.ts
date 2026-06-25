@@ -25,6 +25,7 @@ import { getRandomFallback, replenishPool, replenishPokemonPool } from './ai/que
 import { getInterludeForLevel } from './interludes.js';
 import { sendGameEmail } from './email.js';
 import type { GameState } from './types.js';
+import { isGameActive } from './types.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -162,10 +163,8 @@ function triggerReloadQuestion(game: GameState): void {
 
 // Advances game state by one fixed timestep. Mutates game.
 function update(game: GameState, dt: number): void {
+  if (!isGameActive(game)) return;
   const { player, grid, bullets } = game;
-
-  // Guards — state is PLAYING so these are always set, but TS needs the check
-  if (!player || !grid || !bullets) return;
 
   // Bonus message timer
   if (game.bonusMessageTimer > 0) game.bonusMessageTimer -= dt;
@@ -244,9 +243,8 @@ function update(game: GameState, dt: number): void {
 // ── Render ───────────────────────────────────────────────────────────────────
 
 function render(ctx: CanvasRenderingContext2D, game: GameState): void {
-  drawArenaBackground(ctx, game.grid?.levelType ?? 'poison');
-
-  if (!game.player || !game.grid || !game.bullets) return;
+  if (!isGameActive(game)) return;
+  drawArenaBackground(ctx, game.grid.levelType);
 
   drawPlayer(ctx, game.player);
 
@@ -299,79 +297,97 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
       }
     }
 
-    if (game.state === S.PLAYING) {
-      acc += delta;
-      while (acc >= STEP) {
-        update(game, STEP);
-        acc -= STEP;
+    switch (game.state) {
+      case S.PLAYING: {
+        acc += delta;
+        while (acc >= STEP) {
+          update(game, STEP);
+          acc -= STEP;
+        }
+        render(ctx, game);
+        break;
       }
-      render(ctx, game);
-    } else if (game.state === S.LEVEL_UP) {
-      game.levelUpTimer += delta;
-      const won = game.nextLevel > MAX_LEVELS;
-      renderLevelUpScreen(ctx, game.nextLevel, game.levelUpTimer, getLevelType(game.nextLevel), won);
-      if (game.levelUpTimer >= LEVEL_UP_MS) {
-        if (won) {
-          // All 17 levels completed — save stats then show victory screen
-          game.stats.gamesPlayed++;
-          if (game.score > game.stats.highScore) game.stats.highScore = game.score;
-          saveStats(game.stats);
-          if (game.score > game.highScore) game.highScore = game.score;
-          sendGameEmail(game, 'victory');
-          game.victoryDelay = 0;
-          game.state = S.VICTORY;
-        } else {
-          const interlude = getInterludeForLevel(game.level);
-          if (interlude) {
-            const img = new Image();
-            img.onload = () => { game.interludeImage = img; };
-            img.src = `${import.meta.env.BASE_URL}interludes/${interlude.photo}`;
-            game.interludeImage = null;
-            game.levelUpTimer = 0;
-            consumeKey('Enter');
-            game.state = S.INTERLUDE;
+      case S.LEVEL_UP: {
+        game.levelUpTimer += delta;
+        const won = game.nextLevel > MAX_LEVELS;
+        renderLevelUpScreen(ctx, game.nextLevel, game.levelUpTimer, getLevelType(game.nextLevel), won);
+        if (game.levelUpTimer >= LEVEL_UP_MS) {
+          if (won) {
+            // All 17 levels completed — save stats then show victory screen
+            game.stats.gamesPlayed++;
+            if (game.score > game.stats.highScore) game.stats.highScore = game.score;
+            saveStats(game.stats);
+            if (game.score > game.highScore) game.highScore = game.score;
+            sendGameEmail(game, 'victory');
+            game.victoryDelay = 0;
+            game.state = S.VICTORY;
           } else {
-            startLevel(game, game.nextLevel);
+            const interlude = getInterludeForLevel(game.level);
+            if (interlude) {
+              const img = new Image();
+              img.onload = () => { game.interludeImage = img; };
+              img.src = `${import.meta.env.BASE_URL}interludes/${interlude.photo}`;
+              game.interludeImage = null;
+              game.levelUpTimer = 0;
+              consumeKey('Enter');
+              game.state = S.INTERLUDE;
+            } else {
+              startLevel(game, game.nextLevel);
+            }
           }
         }
+        break;
       }
-    } else if (game.state === S.INTERLUDE) {
-      game.levelUpTimer += delta;
-      renderInterludeScreen(ctx, game.interludeImage);
-      if (game.levelUpTimer > 1500 && consumeKey('Enter')) {
-        startLevel(game, game.nextLevel);
+      case S.INTERLUDE: {
+        game.levelUpTimer += delta;
+        renderInterludeScreen(ctx, game.interludeImage);
+        if (game.levelUpTimer > 1500 && consumeKey('Enter')) startLevel(game, game.nextLevel);
+        break;
       }
-    } else if (game.state === S.VICTORY) {
-      game.victoryDelay += delta;
-      renderVictoryScreen(ctx, game.score, game.highScore, game.victoryDelay);
-      if (game.victoryDelay > VICTORY_DELAY_MS) {
-        if (consumeKey('Enter')) {
-          game.stats.difficultyOffset = -2 * DIFFICULTY_DELTA_MS;
-          game.stats.preQuizCorrect   = 5;
-          saveStats(game.stats);
-          startGame(game);
-        } else if (consumeKey('Escape')) {
-          game.state = S.MENU;
+      case S.VICTORY: {
+        game.victoryDelay += delta;
+        renderVictoryScreen(ctx, game.score, game.highScore, game.victoryDelay);
+        if (game.victoryDelay > VICTORY_DELAY_MS) {
+          if (consumeKey('Enter')) {
+            game.stats.difficultyOffset = -2 * DIFFICULTY_DELTA_MS;
+            game.stats.preQuizCorrect   = 5;
+            saveStats(game.stats);
+            startGame(game);
+          } else if (consumeKey('Escape')) {
+            game.state = S.MENU;
+          }
         }
+        break;
       }
-    } else if (game.state === S.PRE_LEVEL_QUIZ) {
-      renderPreLevelQuizScreen(ctx, game.ammo, game.ammoQuota, game.level, game.grid?.levelType ?? 'normal', game.quizInProgress);
-      if (!game.quizInProgress && consumeKey('Enter')) {
-        game.quizInProgress = true;
-        askPreLevelQuestion(game);
+      case S.PRE_LEVEL_QUIZ: {
+        renderPreLevelQuizScreen(ctx, game.ammo, game.ammoQuota, game.level, game.grid?.levelType ?? 'fire', game.quizInProgress);
+        if (!game.quizInProgress && consumeKey('Enter')) {
+          game.quizInProgress = true;
+          askPreLevelQuestion(game);
+        }
+        break;
       }
-    } else if (game.state === S.QUESTION) {
-      // Game frozen — keep rendering the frozen arena behind the HTML modal
-      render(ctx, game);
-    } else if (game.state === S.MENU) {
-      if (consumeKey('Enter')) startGame(game);
-      renderMenuScreen(ctx, game.highScore);
-    } else if (game.state === S.GAME_OVER) {
-      game.gameOverDelay += delta;
-      if (game.gameOverDelay > GAMEOVER_DELAY_MS && consumeKey('Enter')) {
-        startGame(game);
+      case S.QUESTION: {
+        // Game frozen — keep rendering the frozen arena behind the HTML modal
+        render(ctx, game);
+        break;
       }
-      renderGameOverScreen(ctx, game.score, game.highScore, game.level, game.gameOverDelay);
+      case S.MENU: {
+        if (consumeKey('Enter')) startGame(game);
+        renderMenuScreen(ctx, game.highScore);
+        break;
+      }
+      case S.GAME_OVER: {
+        game.gameOverDelay += delta;
+        if (game.gameOverDelay > GAMEOVER_DELAY_MS && consumeKey('Enter')) startGame(game);
+        renderGameOverScreen(ctx, game.score, game.highScore, game.level, game.gameOverDelay);
+        break;
+      }
+      default: {
+        // Exhaustiveness check — if a new GameStateName is added without a case, TypeScript errors here
+        const _: never = game.state;
+        void _;
+      }
     }
 
     requestAnimationFrame(loop);

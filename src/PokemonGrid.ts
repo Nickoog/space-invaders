@@ -7,6 +7,7 @@ import {
   FIRE_BASE_MS, FIRE_MIN_MS, FIRE_RANDOM_MS, WRONG_TYPE_FIRE_MS,
 } from './constants.js';
 import type { Grid, Enemy, Bullet } from './types.js';
+import type { PokemonType } from './api/pokeapi.js';
 
 interface Bounds {
   left: number;
@@ -18,7 +19,7 @@ export function createGrid(
   level: number,
   ids: number[],
   correctFlags: boolean[] = ids.map(() => true),
-  levelType: string = '',
+  levelType: PokemonType = 'fire',
 ): Grid {
   const totalW = ENEMY_COLS * (ENEMY_W + ENEMY_X_GAP) - ENEMY_X_GAP;
   const startX = (W - totalW) / 2;
@@ -33,7 +34,6 @@ export function createGrid(
         caughtFlash: 0,
         pokemonId:    ids[i] ?? 1,
         correctType:  correctFlags[i] ?? true,
-        pendingCapture: false,
       });
     }
   }

@@ -16,21 +16,23 @@ const LEVEL_TYPES = [
   'ice', 'fighting', 'ghost', 'dragon',
 ] as const;
 
-export const TYPE_LABELS: Record<string, string> = {
+export type PokemonType = typeof LEVEL_TYPES[number];
+
+export const TYPE_LABELS: Record<PokemonType, string> = {
   fire: 'Feu', water: 'Eau', grass: 'Plante', electric: 'Électrik',
   psychic: 'Psy', poison: 'Poison', ground: 'Sol', rock: 'Roche',
   flying: 'Vol', bug: 'Insecte', ice: 'Glace', fighting: 'Combat',
   ghost: 'Spectre', dragon: 'Dragon',
 };
 
-export const TYPE_COLORS: Record<string, string> = {
+export const TYPE_COLORS: Record<PokemonType, string> = {
   fire: '#ff6030', water: '#6890f0', grass: '#78c850', electric: '#f8d030',
   psychic: '#f85888', poison: '#a040a0', ground: '#e0c068', rock: '#b8a038',
   flying: '#a890f0', bug: '#a8b820', ice: '#98d8d8', fighting: '#c03028',
   ghost: '#705898', dragon: '#7038f8',
 };
 
-export function getLevelType(level: number): string {
+export function getLevelType(level: number): PokemonType {
   return LEVEL_TYPES[(level - 1) % LEVEL_TYPES.length]!;
 }
 
@@ -108,7 +110,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export function getIdsForLevel(level: number): { ids: number[]; correctFlags: boolean[]; levelType: string } {
+export function getIdsForLevel(level: number): { ids: number[]; correctFlags: boolean[]; levelType: PokemonType } {
   const levelType = getLevelType(level);
 
   // Load type cache — populated by preloadSprites() on first run

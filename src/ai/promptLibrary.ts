@@ -1,3 +1,5 @@
+import type { PokemonType } from '../api/pokeapi.js';
+
 // ── Bibliothèque de prompts contextuels ──────────────────────────────────────
 //
 // Deux bibliothèques :
@@ -17,7 +19,7 @@ export function getDifficultyTier(level: number): 'easy' | 'medium' | 'hard' {
 // Chaque prompt liste les Pokémon Gen 1 du type, leurs #, attaques et faiblesses.
 // L'IA génère des questions sur ces Pokémon précis — pas de Pokémon inventés.
 
-export const POKEMON_TYPE_PROMPTS: Record<string, string> = {
+export const POKEMON_TYPE_PROMPTS: Record<PokemonType, string> = {
 
   fire: `Tu es expert des Pokémon de type Feu (Génération 1) pour Pokémon Invaders.
 Pose des questions UNIQUEMENT sur ces Pokémon :

@@ -5,6 +5,7 @@ import type { QuestionData, GameState } from '../types.js';
 import { FALLBACK_QUESTIONS } from './fallbackQuestions.js';
 import { QUESTION_POOL_TARGET, QUESTION_TIMEOUT_MS } from '../constants.js';
 import { GEEK_PROMPTS, GEEK_TOPICS, POKEMON_TYPE_PROMPTS, getDifficultyTier } from './promptLibrary.js';
+import type { PokemonType } from '../api/pokeapi.js';
 
 // ── Zod schema (source of truth for the AI response shape) ───────────────────
 
@@ -129,7 +130,7 @@ async function generateQuestion(history: string[], topicIndex: number, level: nu
   return callHaiku(GEEK_PROMPTS[tier], prompt, `geek/${topic}`);
 }
 
-async function generatePokemonQuestion(levelType: string, level: number, history: string[]): Promise<QuestionData> {
+async function generatePokemonQuestion(levelType: PokemonType, level: number, history: string[]): Promise<QuestionData> {
   const tier   = getDifficultyTier(level);
   const system = POKEMON_TYPE_PROMPTS[levelType] ?? POKEMON_TYPE_PROMPTS['fire']!;
   const avoid  = history.length > 0

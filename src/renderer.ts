@@ -5,6 +5,7 @@ import {
   BLINK_INTERVAL_MS, LEVEL_CLEAR_RATIO,
 } from './constants.js';
 import { TYPE_COLORS } from './api/pokeapi.js';
+import type { PokemonType } from './api/pokeapi.js';
 import type { Player, Bullet, Grid, Enemy, GameState } from './types.js';
 
 // ── Player (trainer silhouette) ───────────────────────────────────
@@ -104,7 +105,7 @@ export function drawPokemon(
 // ── Arena background ──────────────────────────────────────────────────────────
 
 // Floor tint per type (subtle — must not obscure sprites)
-const ARENA_FLOOR_TINTS: Record<string, string> = {
+const ARENA_FLOOR_TINTS: Record<PokemonType, string> = {
   fire:     '#2a0800', water:    '#001a2a', grass:    '#001a00',
   electric: '#1a1a00', psychic:  '#1a0014', poison:   '#0f0018',
   ground:   '#1a0f00', rock:     '#0f0f0f', flying:   '#00101a',
@@ -120,7 +121,7 @@ const STARS: Array<{ x: number; y: number; r: number; a: number }> = Array.from(
   a: 0.4 + (i % 3) * 0.2,
 }));
 
-export function drawArenaBackground(ctx: CanvasRenderingContext2D, levelType: string): void {
+export function drawArenaBackground(ctx: CanvasRenderingContext2D, levelType: PokemonType): void {
   const skyH  = Math.floor(H * 0.60);
   const floorY = skyH;
 
@@ -200,7 +201,7 @@ export function drawArenaBackground(ctx: CanvasRenderingContext2D, levelType: st
 
 // ── Enemy projectile by type ──────────────────────────────────────────────────
 
-export function drawEnemyBullet(ctx: CanvasRenderingContext2D, bullet: Bullet, levelType = 'poison'): void {
+export function drawEnemyBullet(ctx: CanvasRenderingContext2D, bullet: Bullet, levelType: PokemonType = 'poison'): void {
   const cx = bullet.x + bullet.w / 2;
   const cy = bullet.y + bullet.h / 2;
   const r  = Math.max(bullet.w, bullet.h) / 2;

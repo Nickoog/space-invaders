@@ -1,5 +1,6 @@
 import { W, H, MENU_BLINK_MS, GAMEOVER_DELAY_MS, ENEMY_COLS, ENEMY_ROWS, LEVEL_CLEAR_RATIO, WRONG_TYPE_RATIO, MAX_LEVELS, VICTORY_DELAY_MS } from './constants.js';
 import { TYPE_LABELS, TYPE_COLORS } from './api/pokeapi.js';
+import type { PokemonType } from './api/pokeapi.js';
 
 export function renderLoadingScreen(ctx: CanvasRenderingContext2D, loaded: number, total: number): void {
   ctx.fillStyle = '#000';
@@ -69,7 +70,7 @@ export function renderMenuScreen(ctx: CanvasRenderingContext2D, highScore: numbe
   ctx.textAlign = 'left';
 }
 
-export function renderLevelUpScreen(ctx: CanvasRenderingContext2D, nextLevel: number, timer: number, levelType: string, won = false): void {
+export function renderLevelUpScreen(ctx: CanvasRenderingContext2D, nextLevel: number, timer: number, levelType: PokemonType, won = false): void {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
 
@@ -236,7 +237,7 @@ export function renderPreLevelQuizScreen(
   ammo: number,
   quota: number,
   level: number,
-  levelType: string,
+  levelType: PokemonType,
   quizInProgress = false,
 ): void {
   ctx.fillStyle = '#000';
