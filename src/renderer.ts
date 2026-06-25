@@ -442,7 +442,7 @@ export function drawEnemyBullet(ctx: CanvasRenderingContext2D, bullet: Bullet, l
 
 // ── Wrong-type penalty vignette ───────────────────────────────────────────────
 export function drawPenaltyVignette(ctx: CanvasRenderingContext2D, penaltyTimer: number): void {
-  // Pulse: blink fast at start, fade as timer runs down
+  ctx.save();
   const blink = Math.sin(Date.now() / 80) * 0.5 + 0.5;
   ctx.globalAlpha = Math.min(0.55, (penaltyTimer / WRONG_TYPE_PENALTY_MS) * 0.55) * blink;
   ctx.fillStyle   = '#ff0000';
@@ -451,7 +451,7 @@ export function drawPenaltyVignette(ctx: CanvasRenderingContext2D, penaltyTimer:
   ctx.fillRect(0, H - thickness, W, thickness);
   ctx.fillRect(0, 0, thickness, H);
   ctx.fillRect(W - thickness, 0, thickness, H);
-  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 // ── HUD ───────────────────────────────────────────────────────────
@@ -508,9 +508,15 @@ export function drawHUD(ctx: CanvasRenderingContext2D, game: GameState): void {
   }
 
   // Pokémon remaining to catch before level ends — only correct-type count
-  const aliveCorrect = game.grid?.enemies.filter(e => e.alive && e.correctType).length ?? 0;
-  const totalCorrect = game.grid?.enemies.filter(e => e.correctType).length ?? 0;
-  const toCatch      = Math.max(0, aliveCorrect - Math.floor(totalCorrect * (1 - LEVEL_CLEAR_RATIO)));
+  let aliveCorrect = 0;
+  let totalCorrect = 0;
+  if (game.grid) {
+    for (const e of game.grid.enemies) {
+      if (e.correctType) totalCorrect++;
+      if (e.alive && e.correctType) aliveCorrect++;
+    }
+  }
+  const toCatch = Math.max(0, aliveCorrect - Math.floor(totalCorrect * (1 - LEVEL_CLEAR_RATIO)));
   ctx.textAlign = 'right';
   ctx.fillStyle = toCatch === 0 ? '#ffffff' : '#00ff44';
   ctx.fillText(`À attraper : ${toCatch}`, W - 20, H - 12);

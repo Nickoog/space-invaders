@@ -58,20 +58,11 @@ function getProvider(): ReturnType<typeof createAnthropic> | null {
 let _fallbackQueue: number[] = [];
 let _fallbackCursor = 0;
 
-function shuffledIndices(n: number): number[] {
-  const arr = Array.from({ length: n }, (_, i) => i);
-  for (let i = n - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j]!, arr[i]!];
-  }
-  return arr;
-}
-
 // ── Public API ───────────────────────────────────────────────────────────────
 
 export function getRandomFallback(): QuestionData {
   if (_fallbackCursor >= _fallbackQueue.length) {
-    _fallbackQueue = shuffledIndices(FALLBACK_QUESTIONS.length);
+    _fallbackQueue = shuffleArray(Array.from({ length: FALLBACK_QUESTIONS.length }, (_, i) => i));
     _fallbackCursor = 0;
   }
   const idx = _fallbackQueue[_fallbackCursor++]!;
@@ -86,33 +77,37 @@ async function callHaiku(systemPrompt: string, userPrompt: string, label: string
     return getRandomFallback();
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), QUESTION_TIMEOUT_MS);
-
-  try {
-    const result = await generateText({
-      model: provider('claude-haiku-4-5-20251001'),
-      output: Output.object({ schema: QuestionSchema }),
-      system: systemPrompt,
-      prompt: userPrompt,
-      maxOutputTokens: 300,
-      temperature: 1.0,
-      abortSignal: controller.signal,
-      providerOptions: {
-        anthropic: { structuredOutputMode: 'jsonTool' },
-      },
-    });
-    clearTimeout(timeout);
-
-    const { inputTokens, outputTokens } = result.usage;
-    console.debug(`[AI] ${label} — in:${inputTokens} out:${outputTokens} tokens`);
-
-    return { ...normalizeQuestion(result.output), source: 'ai' };
-  } catch (err) {
-    clearTimeout(timeout);
-    console.debug(`[AI] erreur (${label}) — fallback`, err);
-    return getRandomFallback();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), QUESTION_TIMEOUT_MS);
+    try {
+      const result = await generateText({
+        model: provider('claude-haiku-4-5-20251001'),
+        output: Output.object({ schema: QuestionSchema }),
+        system: systemPrompt,
+        prompt: userPrompt,
+        maxOutputTokens: 300,
+        temperature: 1.0,
+        abortSignal: controller.signal,
+        providerOptions: {
+          anthropic: { structuredOutputMode: 'jsonTool' },
+        },
+      });
+      clearTimeout(timeout);
+      const { inputTokens, outputTokens } = result.usage;
+      console.debug(`[AI] ${label} — in:${inputTokens} out:${outputTokens} tokens`);
+      return { ...normalizeQuestion(result.output), source: 'ai' };
+    } catch (err) {
+      clearTimeout(timeout);
+      if (attempt < 1) {
+        console.debug(`[AI] ${label} — tentative 1 échouée, retry dans 1.5s`, err);
+        await new Promise(r => setTimeout(r, 1500));
+        continue;
+      }
+      console.debug(`[AI] erreur (${label}) — fallback`, err);
+    }
   }
+  return getRandomFallback();
 }
 
 async function generateQuestion(history: string[], topicIndex: number, level: number): Promise<QuestionData> {

@@ -274,11 +274,6 @@ function render(ctx: CanvasRenderingContext2D, game: GameState): void {
 export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void {
   let lastTime: number | null = null;
   let acc = 0;
-  let skipLevelPending = false;
-
-  document.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.code === 'KeyN' && import.meta.env.MODE === 'development') skipLevelPending = true;
-  });
 
   function loop(ts: number): void {
     if (lastTime === null) lastTime = ts;
@@ -293,9 +288,8 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
     const delta = Math.min(ts - lastTime, 100);
     lastTime = ts;
 
-    // Skip-level cheat — works in any active game state
-    if (skipLevelPending) {
-      skipLevelPending = false;
+    // Skip-level cheat (dev only) — KeyN tracked by existing input.ts listener
+    if (import.meta.env.MODE === 'development' && consumeKey('KeyN')) {
       const activeGameState = game.state !== S.MENU && game.state !== S.GAME_OVER && game.state !== S.VICTORY;
       if (game.skipLevels && activeGameState) {
         game.nextLevel    = game.level + 1;
@@ -332,9 +326,9 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
             const interlude = getInterludeForLevel(game.level);
             if (interlude) {
               const img = new Image();
+              game.interludeImage = null;
               img.onload = () => { game.interludeImage = img; };
               img.src = `${import.meta.env.BASE_URL}interludes/${interlude.photo}`;
-              game.interludeImage = null;
               game.levelUpTimer = 0;
               consumeKey('Enter');
               game.state = S.INTERLUDE;

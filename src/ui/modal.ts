@@ -131,10 +131,6 @@ export function showQuestionModal(
     }, 1400);
   }
 
-  const answersHtml = question.choices.map((c, i) =>
-    `<button class="ai-choice" data-idx="${i}">${String.fromCharCode(65 + i)}. ${c}</button>`
-  ).join('');
-
   const sourceCls   = question.source === 'ai' ? 'ai' : 'fallback';
   const sourceLabel = question.source === 'ai' ? '🤖 IA' : '📚 BANQUE';
 
@@ -150,18 +146,34 @@ export function showQuestionModal(
       </div>`
     : '';
 
+  // Structure with safe static values only — user-controlled content set via textContent below
   overlay.innerHTML = `
     <div class="ai-box">
-      <span class="ai-source-badge ${sourceCls}">${sourceLabel}</span>
-      <div class="ai-title">${title}</div>
-      <div class="ai-subtitle">${subtitle}</div>
+      <span class="ai-source-badge ${sourceCls}"></span>
+      <div class="ai-title"></div>
+      <div class="ai-subtitle"></div>
       ${progressHtml}
       <div class="ai-timer-bar" id="q-timer-bar"></div>
-      <div class="ai-question">${question.question}</div>
-      <div id="q-answers">${answersHtml}</div>
+      <div class="ai-question"></div>
+      <div id="q-answers"></div>
       <div class="ai-result"></div>
     </div>
   `;
+
+  // Set user-controlled content safely (prevents XSS from AI responses)
+  overlay.querySelector<HTMLElement>('.ai-source-badge')!.textContent = sourceLabel;
+  overlay.querySelector<HTMLElement>('.ai-title')!.textContent = title;
+  overlay.querySelector<HTMLElement>('.ai-subtitle')!.textContent = subtitle;
+  overlay.querySelector<HTMLElement>('.ai-question')!.textContent = question.question;
+
+  const answersContainer = overlay.querySelector<HTMLElement>('#q-answers')!;
+  question.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'ai-choice';
+    btn.dataset['idx'] = String(i);
+    btn.textContent = `${String.fromCharCode(65 + i)}. ${c}`;
+    answersContainer.appendChild(btn);
+  });
 
   // Countdown bar
   const bar = overlay.querySelector<HTMLElement>('#q-timer-bar')!;

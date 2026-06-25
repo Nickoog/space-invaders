@@ -15,6 +15,10 @@ interface Bounds {
   bottom: number;
 }
 
+function scaledInterval(base: number, min: number, level: number, offset = 0): number {
+  return Math.max(min, Math.round(base * Math.pow(0.88, level - 1)) + offset);
+}
+
 export function createGrid(
   level: number,
   ids: number[],
@@ -38,7 +42,7 @@ export function createGrid(
     }
   }
 
-  const base = Math.max(GRID_SPEED_MIN, Math.round(GRID_SPEED_BASE * Math.pow(0.88, level - 1)));
+  const base = scaledInterval(GRID_SPEED_BASE, GRID_SPEED_MIN, level);
   return {
     enemies,
     ox: startX,
@@ -47,7 +51,7 @@ export function createGrid(
     moveTimer: base,
     moveInterval: base,
     stepPending: false,
-    fireTimer: Math.max(FIRE_MIN_MS, Math.round(FIRE_BASE_MS * Math.pow(0.88, level - 1))),
+    fireTimer: scaledInterval(FIRE_BASE_MS, FIRE_MIN_MS, level),
     levelType,
     penaltyTimer: 0,
   };
@@ -116,7 +120,7 @@ export function updateGrid(grid: Grid, dt: number, level: number, difficultyOffs
 
     // Accelerate as the grid empties; difficultyOffset shifts the base (positive = easier)
     const ratio = 1 - alive.length / (ENEMY_COLS * ENEMY_ROWS);
-    const base  = Math.max(GRID_SPEED_MIN, Math.round(GRID_SPEED_BASE * Math.pow(0.88, level - 1)) + difficultyOffset);
+    const base  = scaledInterval(GRID_SPEED_BASE, GRID_SPEED_MIN, level, difficultyOffset);
     grid.moveInterval = Math.max(MOVE_INTERVAL_MIN, base * (1 - ratio * GRID_ACCEL_RATIO));
     grid.moveTimer    = grid.moveInterval;
   }
@@ -129,7 +133,7 @@ export function updateGrid(grid: Grid, dt: number, level: number, difficultyOffs
   if (grid.fireTimer <= 0) {
     const base = grid.penaltyTimer > 0
       ? WRONG_TYPE_FIRE_MS + Math.random() * 60         // penalty: ~x8 faster, bypasses FIRE_MIN_MS
-      : Math.max(FIRE_MIN_MS, Math.round(FIRE_BASE_MS * Math.pow(0.88, level - 1)) + difficultyOffset) + Math.random() * FIRE_RANDOM_MS;
+      : scaledInterval(FIRE_BASE_MS, FIRE_MIN_MS, level, difficultyOffset) + Math.random() * FIRE_RANDOM_MS;
     grid.fireTimer = base;
 
     if (alive.length) {
