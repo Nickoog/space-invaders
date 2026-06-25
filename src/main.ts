@@ -6,7 +6,8 @@ import { createGame } from './Game.js';
 import { startLoop } from './gameLoop.js';
 
 const canvas = document.getElementById('c') as HTMLCanvasElement;
-const ctx    = canvas.getContext('2d') as CanvasRenderingContext2D;
+const ctx    = canvas.getContext('2d');
+if (!ctx) throw new Error('Canvas 2D context not available');
 canvas.width  = W;
 canvas.height = H;
 

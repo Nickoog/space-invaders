@@ -1,12 +1,12 @@
 import {
-  S, W, H, STEP,
+  S, STEP,
   PLAYER_W, PLAYER_H, PLAYER_Y,
   ENEMY_W, ENEMY_H,
   ROW_POINTS, CAUGHT_FLASH_MS,
   LEVEL_START_INVINCIBLE_MS, HIT_INVINCIBLE_MS, HIT_INVINCIBLE_CORRECT_MS, CORRECT_ANSWER_BONUS, BONUS_MESSAGE_MS,
   MAX_PLAYER_BULLETS, MAX_ENEMY_BULLETS,
   GAMEOVER_DELAY_MS, LEVEL_UP_MS, VICTORY_DELAY_MS, MAX_LEVELS,
-  DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS,
+  DIFFICULTY_DELTA_MS,
   LEVEL_CLEAR_RATIO,
   WRONG_TYPE_PENALTY_MS,
   AMMO_FULL_BAG, AMMO_PER_CORRECT_RELOAD, AMMO_PER_WRONG_RELOAD,
@@ -120,7 +120,7 @@ function askPreLevelQuestion(game: GameState): void {
   const question      = game.questionPool.shift() ?? getRandomFallback();
   trackQuestion(game, question);
   const quota         = game.ammoQuota;
-  const preQuizCorrect = game.stats.preQuizCorrect;
+  const preQuizCorrect = Math.max(1, game.stats.preQuizCorrect);
   const ammoPerAnswer  = Math.ceil(quota / preQuizCorrect);
 
   showQuestionModal(question, (correct) => {
@@ -272,7 +272,7 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
   let skipLevelPending = false;
 
   document.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.code === 'KeyN') skipLevelPending = true;
+    if (e.code === 'KeyN' && import.meta.env.MODE === 'development') skipLevelPending = true;
   });
 
   function loop(ts: number): void {
