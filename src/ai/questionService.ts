@@ -19,11 +19,11 @@ const QuestionSchema = z.object({
 
 // ── Post-processing ──────────────────────────────────────────────────────────
 
-function truncate(s: string, max: number): string {
+export function truncate(s: string, max: number): string {
   return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
 }
 
-function shuffleArray<T>(arr: T[]): T[] {
+export function shuffleArray<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

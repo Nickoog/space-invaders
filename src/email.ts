@@ -2,7 +2,7 @@ import emailjs from '@emailjs/browser';
 import { DIFFICULTY_DELTA_MS } from './constants.js';
 import type { GameState } from './types.js';
 
-function diffLabel(offset: number): string {
+export function diffLabel(offset: number): string {
   const steps = Math.round(offset / DIFFICULTY_DELTA_MS);
   if (steps === 0) return 'Normal';
   return steps > 0 ? `+${steps} (plus facile)` : `${steps} (plus difficile)`;

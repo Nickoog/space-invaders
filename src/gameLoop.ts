@@ -36,7 +36,7 @@ function trackQuestion(game: GameState, question: { question: string }): void {
 
 // ── State transitions ────────────────────────────────────────────────────────
 
-function startLevel(game: GameState, level: number): void {
+export function startLevel(game: GameState, level: number): void {
   game.level  = level;
   game.player = createPlayer();
   game.player.invincible = LEVEL_START_INVINCIBLE_MS;
@@ -72,7 +72,7 @@ export function startGame(game: GameState): void {
   // startLevel sets state to PRE_LEVEL_QUIZ and triggers the quiz
 }
 
-function endGame(game: GameState): void {
+export function endGame(game: GameState): void {
   game.stats.gamesPlayed++;
   if (game.score > game.stats.highScore) game.stats.highScore = game.score;
   saveStats(game.stats);
