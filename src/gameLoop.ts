@@ -21,6 +21,7 @@ import { drawPlayer, drawPokeball, drawEnemyBullet, drawPokemon, drawHUD, drawPe
 import { renderMenuScreen, renderGameOverScreen, renderLevelUpScreen, renderVictoryScreen, renderInterludeScreen, renderPreLevelQuizScreen } from './screens.js';
 import { overlap } from './collision.js';
 import { showQuestionModal } from './ui/modal.js';
+import { showHomeScreen } from './ui/homeScreen.js';
 import { getRandomFallback, replenishPool, replenishPokemonPool } from './ai/questionService.js';
 import { getInterludeForLevel } from './interludes.js';
 import { sendGameEmail } from './email.js';
@@ -290,7 +291,7 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
 
     // Skip-level cheat (dev only) — KeyN tracked by existing input.ts listener
     if (import.meta.env.MODE === 'development' && consumeKey('KeyN')) {
-      const activeGameState = game.state !== S.MENU && game.state !== S.GAME_OVER && game.state !== S.VICTORY;
+      const activeGameState = game.state !== S.HOME && game.state !== S.MENU && game.state !== S.GAME_OVER && game.state !== S.VICTORY;
       if (game.skipLevels && activeGameState) {
         game.nextLevel    = game.level + 1;
         game.levelUpTimer = 0;
@@ -299,6 +300,12 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
     }
 
     switch (game.state) {
+      case S.HOME: {
+        // DOM overlay handles all UI — canvas stays black underneath
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        break;
+      }
       case S.PLAYING: {
         acc += delta;
         while (acc >= STEP) {
@@ -355,7 +362,8 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
             saveStats(game.stats);
             startGame(game);
           } else if (consumeKey('Escape')) {
-            game.state = S.MENU;
+            game.state = S.HOME;
+            showHomeScreen(game, startGame);
           }
         }
         break;
@@ -380,7 +388,10 @@ export function startLoop(game: GameState, ctx: CanvasRenderingContext2D): void 
       }
       case S.GAME_OVER: {
         game.gameOverDelay += delta;
-        if (game.gameOverDelay > GAMEOVER_DELAY_MS && consumeKey('Enter')) startGame(game);
+        if (game.gameOverDelay > GAMEOVER_DELAY_MS) {
+          if (consumeKey('Enter')) startGame(game);
+          else if (consumeKey('Escape')) { game.state = S.HOME; showHomeScreen(game, startGame); }
+        }
         renderGameOverScreen(ctx, game.score, game.highScore, game.level, game.gameOverDelay);
         break;
       }

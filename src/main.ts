@@ -3,7 +3,8 @@ import { initInput } from './input.js';
 import { preloadSprites } from './api/pokeapi.js';
 import { renderLoadingScreen } from './screens.js';
 import { createGame } from './Game.js';
-import { startLoop } from './gameLoop.js';
+import { startLoop, startGame } from './gameLoop.js';
+import { showHomeScreen } from './ui/homeScreen.js';
 
 const canvas = document.getElementById('c') as HTMLCanvasElement;
 const ctx    = canvas.getContext('2d');
@@ -23,4 +24,5 @@ preloadSprites(ids, (loaded, total) => {
 }).then(spriteMap => {
   const game = createGame(spriteMap);
   startLoop(game, ctx);
+  showHomeScreen(game, startGame);
 });

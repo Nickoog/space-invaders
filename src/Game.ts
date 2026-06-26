@@ -4,7 +4,7 @@ import type { GameState } from './types.js';
 
 export function createGame(spriteMap: Map<number, HTMLImageElement | null>): GameState {
   return {
-    state:             S.MENU,
+    state:             S.HOME,
     spriteMap,
     score:             0,
     highScore:         0,

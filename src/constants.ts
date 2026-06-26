@@ -70,6 +70,7 @@ export const MENU_BLINK_MS     = 500;   // menu/game-over text blink interval (m
 
 // Game states
 export const S = {
+  HOME:          'HOME',
   MENU:          'MENU',
   PLAYING:       'PLAYING',
   GAME_OVER:     'GAME_OVER',

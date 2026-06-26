@@ -391,6 +391,9 @@ export function renderGameOverScreen(ctx: CanvasRenderingContext2D, score: numbe
     ctx.fillStyle = '#ffffff';
     ctx.font = '13px "Press Start 2P", monospace';
     ctx.fillText('ENTRÉE pour rejouer', W / 2, 452);
+    ctx.fillStyle = '#888888';
+    ctx.font = '11px "Press Start 2P", monospace';
+    ctx.fillText('ÉCHAP pour revenir à l\'accueil', W / 2, 488);
   }
 
   ctx.textAlign = 'left';
