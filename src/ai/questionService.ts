@@ -1,23 +1,9 @@
-import { generateText, Output } from 'ai';
-import { createAnthropic } from '@ai-sdk/anthropic';
-import { z } from 'zod';
 import type { QuestionData, GameState } from '../types.js';
 import { FALLBACK_QUESTIONS } from './fallbackQuestions.js';
 import { QUESTION_POOL_TARGET, QUESTION_TIMEOUT_MS } from '../constants.js';
 import { GEEK_PROMPTS, GEEK_TOPICS, POKEMON_TYPE_PROMPTS, getDifficultyTier } from './promptLibrary.js';
 import type { PokemonType } from '../api/pokeapi.js';
 import { shuffleArray } from '../utils.js';
-
-// ── Zod schema (source of truth for the AI response shape) ───────────────────
-
-const QuestionSchema = z.object({
-  question: z.string().min(5).max(120),
-  type: z.literal('multiple_choice'),
-  choices: z.array(z.string().max(50)).min(4).max(4),
-  correct_answer: z.string().min(1).max(50),
-  humor_level: z.enum(['mild', 'absurd']),
-});
-
 
 // ── Post-processing ──────────────────────────────────────────────────────────
 
@@ -33,23 +19,6 @@ function normalizeQuestion(q: QuestionData): QuestionData {
   const choices = shuffleArray(q.choices.map(c => truncate(c, 30)));
   const correct = truncate(q.correct_answer, 30);
   return { ...q, question: truncate(q.question, 80), choices, correct_answer: correct };
-}
-
-// ── Provider (lazy singleton) ────────────────────────────────────────────────
-
-let _provider: ReturnType<typeof createAnthropic> | null = null;
-
-function getProvider(): ReturnType<typeof createAnthropic> | null {
-  if (_provider) return _provider;
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-  if (!apiKey || apiKey === 'your_api_key_here') return null;
-  _provider = createAnthropic({
-    apiKey,
-    // Required header for direct browser access — key is exposed in the bundle.
-    // For production with real traffic, use a serverless proxy (Vercel/Netlify).
-    headers: { 'anthropic-dangerous-direct-browser-access': 'true' },
-  });
-  return _provider;
 }
 
 // ── Fallback shuffle queue ───────────────────────────────────────────────────
@@ -71,36 +40,19 @@ export function getRandomFallback(): QuestionData {
 }
 
 async function callHaiku(systemPrompt: string, userPrompt: string, label: string): Promise<QuestionData> {
-  const provider = getProvider();
-  if (!provider) {
-    console.debug('[AI] pas de provider — fallback');
-    return getRandomFallback();
-  }
-
   for (let attempt = 0; attempt < 2; attempt++) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), QUESTION_TIMEOUT_MS);
     try {
-      const result = await generateText({
-        model: provider('claude-haiku-4-5-20251001'),
-        output: Output.object({ schema: QuestionSchema }),
-        system: systemPrompt,
-        prompt: userPrompt,
-        maxOutputTokens: 300,
-        temperature: 1.0,
-        abortSignal: controller.signal,
-        providerOptions: {
-          anthropic: { structuredOutputMode: 'jsonTool' },
-        },
+      const res = await fetch('/api/question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt, userPrompt }),
+        signal: AbortSignal.timeout(QUESTION_TIMEOUT_MS),
       });
-      clearTimeout(timeout);
-      const { inputTokens, outputTokens } = result.usage;
-      console.debug(`[AI] ${label} — in:${inputTokens} out:${outputTokens} tokens`);
-      return { ...normalizeQuestion(result.output), source: 'ai' };
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as QuestionData;
+      return { ...normalizeQuestion(data), source: 'ai' };
     } catch (err) {
-      clearTimeout(timeout);
       if (attempt < 1) {
-        console.debug(`[AI] ${label} — tentative 1 échouée, retry dans 1.5s`, err);
         await new Promise(r => setTimeout(r, 1500));
         continue;
       }
