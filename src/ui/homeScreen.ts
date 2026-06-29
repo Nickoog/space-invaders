@@ -1,6 +1,7 @@
 import { DIFFICULTY_DELTA_MS, DIFFICULTY_MAX_STEPS, AMMO_FULL_BAG } from '../constants.js';
 import { saveStats } from '../flavienProfile.js';
 import { diffLabel } from '../email.js';
+import { showRulesScreen } from './rulesScreen.js';
 import type { GameState } from '../types.js';
 
 let stylesInjected = false;
@@ -113,7 +114,7 @@ export function showHomeScreen(game: GameState, onPlay: (g: GameState) => void):
     overlay.querySelector('#home-settings-btn')!.addEventListener('click', renderSettings);
     overlay.querySelector('#home-play-btn')!.addEventListener('click', () => {
       removeHomeScreen();
-      onPlay(game);
+      showRulesScreen(game, onPlay);
     });
   }
 

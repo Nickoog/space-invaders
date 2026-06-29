@@ -6,7 +6,7 @@ const DEFAULT: FlavienStats = {
   highScore:        0,
   gamesPlayed:      0,
   difficultyOffset: 0,
-  preQuizCorrect:   5,
+  preQuizCorrect:   3,
 };
 
 export function loadStats(): FlavienStats {

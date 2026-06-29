@@ -251,82 +251,44 @@ export function renderPreLevelQuizScreen(
   if (!quizInProgress) {
     // ── Phase 1 : écran d'intro ───────────────────────────────────────────────
 
-    let y = level === 1 ? 30 : 50;
+    let y = level === 1 ? 60 : 100;
 
     if (level === 1) {
       ctx.fillStyle = '#ffff44';
       ctx.font = '13px "Press Start 2P", monospace';
       ctx.fillText('BIENVENUE, FLAVIEN !', W / 2, y);
-      y += 36;
+      y += 42;
     }
 
     // Titre niveau
     ctx.fillStyle = '#ffffff';
     ctx.font = '28px "Press Start 2P", monospace';
     ctx.fillText(`NIVEAU ${level}`, W / 2, y);
-    y += 42;
+    y += 50;
 
     // Type
     ctx.fillStyle = typeColor;
     ctx.font = '16px "Press Start 2P", monospace';
     ctx.fillText(`Pokémon à attraper : ${typeLabel.toUpperCase()}`, W / 2, y);
-    y += 30;
+    y += 42;
 
-    // Séparateur haut
+    // Séparateur
     ctx.strokeStyle = '#2a2a2a';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W - 60, y); ctx.stroke();
-    y += 30;
+    y += 38;
 
     // Contrôles
     ctx.fillStyle = '#444444';
     ctx.font = '12px "Press Start 2P", monospace';
     ctx.fillText('← →  DÉPLACER          ESPACE  LANCER', W / 2, y);
-    y += 40;
-
-    // Règle principale — type
-    ctx.fillStyle = typeColor;
-    ctx.font = '17px "Press Start 2P", monospace';
-    ctx.fillText(`Attrape les Pokémon ${typeLabel} !`, W / 2, y);
     y += 42;
 
-    // Mauvais type
-    ctx.fillStyle = '#ff9944';
-    ctx.font = '13px "Press Start 2P", monospace';
-    ctx.fillText('Mauvais type  →  la colère des Légendaires !', W / 2, y);
-    y += 32;
-
-    // Balle ennemie
-    ctx.fillStyle = '#888888';
-    ctx.font = '13px "Press Start 2P", monospace';
-    ctx.fillText('Balle ennemie  →  réponds ou tu perds une vie', W / 2, y);
-    y += 32;
-
-    // Rechargement
-    ctx.fillStyle = '#888888';
-    ctx.font = '13px "Press Start 2P", monospace';
-    ctx.fillText('Plus de pokéballs  →  ESPACE pour en regagner', W / 2, y);
-    y += 28;
-
-    // Séparateur bas
+    // Séparateur
     ctx.strokeStyle = '#2a2a2a';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W - 60, y); ctx.stroke();
-    y += 32;
-
-    // Phrase de transition
-    ctx.fillStyle = '#aaaaaa';
-    ctx.font = '11px "Press Start 2P", monospace';
-    ctx.fillText('Mais avant de commencer,', W / 2, y);
-    y += 22;
-    ctx.fillText('gagne tes pokéballs en répondant aux questions !', W / 2, y);
-    y += 34;
-
-    // Objectif
-    ctx.fillStyle = '#cccccc';
-    ctx.font = '14px "Press Start 2P", monospace';
-    ctx.fillText(`Objectif : ${quota} pokéballs`, W / 2, y);
-    y += 46;
+    y += 60;
 
     // CTA clignotant
     if (Math.floor(Date.now() / MENU_BLINK_MS) % 2 === 0) {

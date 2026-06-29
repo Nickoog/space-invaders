@@ -40,5 +40,7 @@ export function sendGameEmail(game: GameState, type: 'victory' | 'gameover'): vo
     difficulty:   diffLabel(game.stats.difficultyOffset),
   };
 
-  emailjs.send(serviceId, templateId, params, publicKey).catch(() => { /* silencieux */ });
+  emailjs.send(serviceId, templateId, params, { publicKey }).catch((err: unknown) => {
+    console.error('[EmailJS] échec envoi :', err);
+  });
 }

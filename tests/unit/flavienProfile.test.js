@@ -3,7 +3,7 @@ import { loadStats, saveStats } from '../../src/flavienProfile.js';
 
 const LS_KEY = 'pokemon_invaders_flavien';
 
-const DEFAULT = { highScore: 0, gamesPlayed: 0, difficultyOffset: 0, preQuizCorrect: 5 };
+const DEFAULT = { highScore: 0, gamesPlayed: 0, difficultyOffset: 0, preQuizCorrect: 3 };
 
 let store = {};
 
@@ -41,7 +41,7 @@ describe('loadStats', () => {
     expect(result.highScore).toBe(999);
     expect(result.gamesPlayed).toBe(0);
     expect(result.difficultyOffset).toBe(0);
-    expect(result.preQuizCorrect).toBe(5);
+    expect(result.preQuizCorrect).toBe(3);
   });
 
   it('retourne l\'objet complet si toutes les clés sont présentes', () => {
