@@ -21,6 +21,13 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Check secrets
+        run: |
+          echo "ANTHROPIC key length: ${#VITE_ANTHROPIC_API_KEY}"
+          echo "Starts with sk-ant: $(echo $VITE_ANTHROPIC_API_KEY | cut -c1-10)"
+        env:
+          VITE_ANTHROPIC_API_KEY: ${{ secrets.VITE_ANTHROPIC_API_KEY }}
+
       - run: npm install
 
       - name: TypeScript check
