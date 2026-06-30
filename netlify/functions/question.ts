@@ -3,14 +3,13 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 
 const QuestionSchema = z.object({
-  question:       z.string().min(5).max(120),
+  question:       z.string().min(5).max(160),
   type:           z.literal('multiple_choice'),
   choices:        z.array(z.string().max(50)).min(4).max(4),
-  correct_answer: z.string().min(1).max(50),
-  humor_level:    z.enum(['mild', 'absurd']),
+  correct_answer: z.string().min(1).max(60),
 });
 
-const TIMEOUT_MS = 8_000;
+const TIMEOUT_MS = 12_000;
 
 export const handler = async (event: { httpMethod: string; body: string | null }) => {
   if (event.httpMethod !== 'POST') {
@@ -37,7 +36,7 @@ export const handler = async (event: { httpMethod: string; body: string | null }
   try {
     const anthropic = createAnthropic({ apiKey });
     const result = await generateText({
-      model: anthropic('claude-haiku-4-5-20251001'),
+      model: anthropic('claude-sonnet-4-6'),
       output: Output.object({ schema: QuestionSchema }),
       system: systemPrompt,
       prompt: userPrompt,

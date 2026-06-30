@@ -64,7 +64,6 @@ export interface QuestionData {
   type: 'multiple_choice';
   choices: string[];
   correct_answer: string;
-  humor_level: 'mild' | 'absurd';
   source?: 'ai' | 'fallback';
 }
 

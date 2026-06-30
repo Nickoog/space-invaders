@@ -12,7 +12,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Normal', 'Eau', 'Psy', 'Sol'],
     correct_answer: 'Normal',
-    humor_level: 'mild',
   },
   // G
   {
@@ -20,7 +19,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['2011', '2009', '2013', '2008'],
     correct_answer: '2011',
-    humor_level: 'mild',
   },
   // R
   {
@@ -28,7 +26,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['ByteDance', 'Meta', 'Tencent', 'Alibaba'],
     correct_answer: 'ByteDance',
-    humor_level: 'mild',
   },
   // C
   {
@@ -36,7 +33,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Robert Downey Jr.', 'Chris Evans', 'Chris Hemsworth', 'Mark Ruffalo'],
     correct_answer: 'Robert Downey Jr.',
-    humor_level: 'mild',
   },
   // D
   {
@@ -44,7 +40,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Pâtachu', 'Élec-tagliatelles', 'Ravichu', 'Spaghé-lectrique'],
     correct_answer: 'Pâtachu',
-    humor_level: 'absurd',
   },
 
   // P
@@ -53,7 +48,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['151', '150', '152', '251'],
     correct_answer: '151',
-    humor_level: 'mild',
   },
   // G
   {
@@ -61,7 +55,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['PUBG', 'Fortnite', 'Warzone', 'Apex Legends'],
     correct_answer: 'PUBG',
-    humor_level: 'mild',
   },
   // R
   {
@@ -69,7 +62,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['2012', '2014', '2010', '2016'],
     correct_answer: '2012',
-    humor_level: 'mild',
   },
   // C
   {
@@ -77,7 +69,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Corée du Sud', 'Japon', 'Chine', 'Thaïlande'],
     correct_answer: 'Corée du Sud',
-    humor_level: 'mild',
   },
   // D
   {
@@ -85,7 +76,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Mewtwo', 'Pikachu', 'Ronflex', 'Magicarpe (ironie)'],
     correct_answer: 'Mewtwo',
-    humor_level: 'absurd',
   },
 
   // P
@@ -94,7 +84,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Bulbizarre', 'Salamèche', 'Carapuce', 'Pikachu'],
     correct_answer: 'Bulbizarre',
-    humor_level: 'mild',
   },
   // G
   {
@@ -102,7 +91,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['3', '2', '4', '1'],
     correct_answer: '3',
-    humor_level: 'mild',
   },
   // R
   {
@@ -110,7 +98,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['MrBeast', 'PewDiePie', 'T-Series', 'Cocomelon'],
     correct_answer: 'MrBeast',
-    humor_level: 'mild',
   },
   // C
   {
@@ -118,7 +105,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Drake', 'Lil Wayne', 'Future', 'Travis Scott'],
     correct_answer: 'Drake',
-    humor_level: 'mild',
   },
   // D
   {
@@ -126,7 +112,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['9', '7', '3', '13'],
     correct_answer: '9',
-    humor_level: 'absurd',
   },
 
   // P
@@ -135,7 +120,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Dragon / Vol', 'Feu / Dragon', 'Dragon / Normal', 'Sol / Dragon'],
     correct_answer: 'Dragon / Vol',
-    humor_level: 'mild',
   },
   // G
   {
@@ -143,7 +127,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Fortnite', 'Roblox', 'Minecraft', 'GTA Online'],
     correct_answer: 'Fortnite',
-    humor_level: 'mild',
   },
   // R
   {
@@ -151,7 +134,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['280', '140', '500', '240'],
     correct_answer: '280',
-    humor_level: 'mild',
   },
   // C
   {
@@ -159,7 +141,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Stranger Things', 'Dark', 'The OA', 'Black Mirror'],
     correct_answer: 'Stranger Things',
-    humor_level: 'mild',
   },
   // D
   {
@@ -167,7 +148,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Bleu', 'Gris (en France)', 'Noir la nuit', 'Ça dépend du filtre'],
     correct_answer: 'Bleu',
-    humor_level: 'absurd',
   },
 
   // P
@@ -176,7 +156,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Fatal-Foudre', 'Tonnerre', 'Éclair', 'Électacle'],
     correct_answer: 'Fatal-Foudre',
-    humor_level: 'mild',
   },
   // G
   {
@@ -184,7 +163,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Wii U', 'Switch', '3DS', 'Wii'],
     correct_answer: 'Wii U',
-    humor_level: 'mild',
   },
   // R
   {
@@ -192,7 +170,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Snapchat', 'Instagram', 'TikTok', 'Facebook'],
     correct_answer: 'Snapchat',
-    humor_level: 'mild',
   },
   // C
   {
@@ -200,7 +177,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Toy Story', 'Cars', 'Up', 'Ratatouille'],
     correct_answer: 'Toy Story',
-    humor_level: 'mild',
   },
   // D
   {
@@ -208,7 +184,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Toi !', 'Ton pote', 'Personne', "L'IA qui joue seule"],
     correct_answer: 'Toi !',
-    humor_level: 'absurd',
   },
 
   // P
@@ -217,7 +192,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Argenta', 'Jadielle', 'Joëlville', 'Lavanville'],
     correct_answer: 'Jadielle',
-    humor_level: 'mild',
   },
   // G
   {
@@ -225,7 +199,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Sony', 'Microsoft', 'Nintendo', 'Sega'],
     correct_answer: 'Sony',
-    humor_level: 'mild',
   },
   // R
   {
@@ -233,7 +206,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ["Plus de RT que de likes", "Bloquer quelqu'un", 'Un tag massif', 'Un mème viral'],
     correct_answer: 'Plus de RT que de likes',
-    humor_level: 'mild',
   },
   // C
   {
@@ -241,7 +213,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Real Madrid', 'PSG', 'Liverpool', 'Bayern Munich'],
     correct_answer: 'Real Madrid',
-    humor_level: 'mild',
   },
 
   // P
@@ -250,7 +221,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['8', '7', '6', '9'],
     correct_answer: '8',
-    humor_level: 'mild',
   },
   // G
   {
@@ -258,7 +228,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Mario', 'Luigi', 'Toad', 'Waluigi'],
     correct_answer: 'Mario',
-    humor_level: 'absurd',
   },
   // C
   {
@@ -266,7 +235,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Breaking Bad', 'Narcos', 'Ozark', 'Better Call Saul'],
     correct_answer: 'Breaking Bad',
-    humor_level: 'mild',
   },
 
   // P
@@ -275,7 +243,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Arceus', 'Mew', 'Mewtwo', 'Dialga'],
     correct_answer: 'Arceus',
-    humor_level: 'mild',
   },
   // G
   {
@@ -283,7 +250,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['The Legend of Zelda', 'Skyrim', 'Elden Ring', 'Dark Souls'],
     correct_answer: 'The Legend of Zelda',
-    humor_level: 'mild',
   },
 
   // P
@@ -292,7 +258,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Sur mobile', 'Switch', '3DS', 'PC'],
     correct_answer: 'Sur mobile',
-    humor_level: 'mild',
   },
   // G
   {
@@ -300,7 +265,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['100', '50', '64', '150'],
     correct_answer: '100',
-    humor_level: 'mild',
   },
 
   // P
@@ -309,7 +273,6 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Staross', 'Magicarpe', 'Tentacruel', 'Aquali'],
     correct_answer: 'Staross',
-    humor_level: 'mild',
   },
   // G
   {
@@ -317,6 +280,5 @@ export const FALLBACK_QUESTIONS: QuestionData[] = [
     type: 'multiple_choice',
     choices: ['Halo', 'Destiny', 'Mass Effect', 'Titanfall'],
     correct_answer: 'Halo',
-    humor_level: 'mild',
   },
 ];

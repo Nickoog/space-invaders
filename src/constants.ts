@@ -101,5 +101,5 @@ export const CAPTURE_QUESTION_SEC    = 15;  // timer for capture confirmation qu
 export const DIFFICULTY_DELTA_MS   = 100;  // ms offset per correct/wrong answer
 export const DIFFICULTY_MAX_STEPS  = 4;    // max cumulative steps in each direction
 export const QUESTION_POOL_TARGET  = 3;    // questions to pre-generate and keep ready
-export const QUESTION_TIMEOUT_MS   = 8000; // ms before API call falls back to local bank
+export const QUESTION_TIMEOUT_MS   = 12000; // ms before API call falls back to local bank
 export const QUESTION_ANSWER_SEC   = 25;   // seconds the player has to answer
