@@ -97,7 +97,7 @@ export function updateGrid(grid: Grid, dt: number, level: number, difficultyOffs
       e.caughtFlash -= dt;
       if (e.caughtFlash <= 0) {
         e.caughtFlash = 0;
-        e.alive = false;
+        if (e.correctType) e.alive = false;
       }
     }
   }
